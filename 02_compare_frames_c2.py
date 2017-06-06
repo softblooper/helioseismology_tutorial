@@ -14,13 +14,16 @@ plt.imshow(image_data1[0],cmap = 'gray')
 plt.gca().invert_yaxis()
 divider=make_axes_locatable(plt.gca())
 cax=divider.append_axes("right", size="10%", pad=0.05)
-plt.colorbar(cax=cax)
+ibar1 = plt.colorbar(cax=cax)
+ibar1.set_label('m/s)
 plt.subplot(2,2,3)
 plt.imshow(image_data2[0],cmap = 'gray')
 plt.gca().invert_yaxis()
 divider=make_axes_locatable(plt.gca())
 cax=divider.append_axes("right", size="10%", pad=0.05)
-plt.colorbar(cax=cax)
+ibar2 = plt.colorbar(cax=cax)
+ibar2.set_label('m/s)
+
 txt_1 = '''
 The two datasets (data1 and data2) are three-dimensional arrays
 (read in from the original FITS format).
@@ -54,6 +57,7 @@ plt.xlabel('data1 frame 0')
 plt.ylabel('data2 frame 0')
 plt.xlim(-600, 800)
 plt.ylim(-600, 800)
+
 txt_3 = '''
 Both of the datasets are calibrated in units of m/s.
 However the scatter plot does not have a slope of unity,
