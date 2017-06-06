@@ -15,14 +15,14 @@ plt.gca().invert_yaxis()
 divider=make_axes_locatable(plt.gca())
 cax=divider.append_axes("right", size="10%", pad=0.05)
 ibar1 = plt.colorbar(cax=cax)
-ibar1.set_label('m/s)
+ibar1.set_label('m/s')
 plt.subplot(2,2,3)
 plt.imshow(image_data2[0],cmap = 'gray')
 plt.gca().invert_yaxis()
 divider=make_axes_locatable(plt.gca())
 cax=divider.append_axes("right", size="10%", pad=0.05)
 ibar2 = plt.colorbar(cax=cax)
-ibar2.set_label('m/s)
+ibar2.set_label('m/s')
 
 txt_1 = '''
 The two datasets (data1 and data2) are three-dimensional arrays
