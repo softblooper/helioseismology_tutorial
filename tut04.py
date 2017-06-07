@@ -13,6 +13,7 @@ def plotfitsslices(row,col,title,imgdata,color,cbarlabel):
     ibar= plt.colorbar()
     ibar.set_label(cbarlabel)
     plt.gca().invert_yaxis()
+    plt.grid(False)
     
 #Make function work?
 '''def animate(title,imgdata,color):
