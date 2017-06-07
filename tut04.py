@@ -63,8 +63,6 @@ ims1 = []
 for i in range(512):
     im1 = plt.imshow(imgdata4[i], cmap = 'gray')
     ims1.append([im1])
-plt.xlabel('x')
-plt.ylabel('y')
 plt.gca().invert_yaxis()
 ani1 = animation.ArtistAnimation(fig, ims1, interval=100, blit=True,
     repeat_delay=1000)
@@ -75,8 +73,6 @@ ims2 = []
 for i in range(512):
     im2 = plt.imshow(imgdata5[i], cmap = 'gray')
     ims2.append([im2])
-plt.xlabel('x')
-plt.ylabel('y')
 plt.gca().invert_yaxis()
 ani2 = animation.ArtistAnimation(fig, ims2, interval=100, blit=True,
     repeat_delay=1000)
