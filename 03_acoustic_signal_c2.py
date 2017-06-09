@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from pylab import *
 from astropy.io import fits
 import textwrap as tw
-import pywinauto
 
 #Opens FITS files
 image_data1 = fits.getdata('data1.fits')
@@ -65,13 +64,4 @@ plt.figtext(0.55, 0.1, fig_txt, horizontalalignment='left',
             bbox=dict(boxstyle="round", facecolor='white',
                       ec="0.5", pad=0.5, alpha=1), fontweight='bold')
 
-# SWAPY will record the title and class of the window you want activated
-app = pywinauto.application.Application()
-t, c = u'WINDOW SWAPY RECORDS', u'CLASS SWAPY RECORDS'
-handle = pywinauto.findwindows.find_windows(title=t, class_name=c)[0]
-# SWAPY will also get the window
-window = app.window_(handle=handle)
-
-# this here is the only line of code you actually write (SWAPY recorded the rest)
-window.SetFocus()
 plt.show()
