@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 from pylab import *
 from astropy.io import fits
 import textwrap as tw
+import pywinauto
 
+#Opens FITS files
 image_data1 = fits.getdata('data1.fits')
 image_data2 = fits.getdata('data2.fits')
 plt.gcf().canvas.set_window_title('Showing data1 & data2')
 
+#Main function, creates the subplots and provides the style for the graphs.
 subplot(2,2,1)
 plt.imshow((image_data1[0] + image_data1[2])/2, cmap = 'gray', vmin = -500.00e00, vmax = 800e00)
 plt.title("Average of frame 0 & 2")
@@ -22,6 +25,8 @@ plt.title("Difference of frame 0 & 2")
 ibar2 = plt.colorbar()
 ibar2.set_label('m/s')
 plt.gca().invert_yaxis()
+
+#Add the text. Font, style, location, width of the text box and more is created here.
 txt_1 = '''
 The images in the datacubes here are taken at a rate of one per minute.
 A quick way to "see" the oscillations is to subtract two frames taken
@@ -60,4 +65,13 @@ plt.figtext(0.55, 0.1, fig_txt, horizontalalignment='left',
             bbox=dict(boxstyle="round", facecolor='white',
                       ec="0.5", pad=0.5, alpha=1), fontweight='bold')
 
+# SWAPY will record the title and class of the window you want activated
+app = pywinauto.application.Application()
+t, c = u'WINDOW SWAPY RECORDS', u'CLASS SWAPY RECORDS'
+handle = pywinauto.findwindows.find_windows(title=t, class_name=c)[0]
+# SWAPY will also get the window
+window = app.window_(handle=handle)
+
+# this here is the only line of code you actually write (SWAPY recorded the rest)
+window.SetFocus()
 plt.show()
