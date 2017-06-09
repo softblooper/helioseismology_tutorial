@@ -80,6 +80,6 @@ ani2 = animation.ArtistAnimation(fig, ims2, interval=100, blit=True,
 #Made autoanimation. How to control playback?
 
 #Open Figure Maximized
-#mng = plt.get_current_fig_manager()
-#mng.window.showMaximized()
+mng = plt.get_current_fig_manager()
+mng.window.showMaximized()
 plt.show()
