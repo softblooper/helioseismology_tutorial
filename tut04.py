@@ -33,11 +33,8 @@ def animate(row,col,title,imgdata,color):
 fitsnplot=np.array([['data1.fits','Data 1 Time Slices','gray','Velocity (m/s)'],
     ['data2.fits','Data 2 Time Slices','gray','Velocity (m/s)']])
 
-#Data and Text
-fitsimage4=fits.open(fitsnplot[0,0])
-imgdata4=fitsimage4[0].data
-fitsimage5=fits.open(fitsnplot[1,0])
-imgdata5=fitsimage4[0].data
+imgdata4=fits.getdata(fitsnplot[0,0])
+imgdata5=fits.getdata(fitsnplot[1,0])
 
 #Figure information
 fig=plt.figure(1, facecolor = 'white', edgecolor = 'k')
