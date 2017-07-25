@@ -1,4 +1,4 @@
-#04 - Time slices
+#03 - Acoustic signals
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -6,10 +6,9 @@ from astropy.io import fits
 from astropy.visualization import astropy_mpl_style
 plt.style.use(astropy_mpl_style)
 import matplotlib.image as mpimg
-import matplotlib.animation as animation
 
 #Create Fits Image Object
-class FitsImage(object): #Allows creating of plots with data from fits files
+class FitsImage(object):
     
     #Initializes object, converts fits data into Python array. Detects shape for corresponding plot.
     def __init__(self,file,title,colorscale,colorlabel):
@@ -45,51 +44,60 @@ class FitsImage(object): #Allows creating of plots with data from fits files
             plt.xticks([])
             plt.yticks([])
             plt.grid(False)
+
+class Average(object):
     
-    #Plot Time Slices Method: Plots the layout of a slice of the datacube in order to show change over time.
-    def sliceplot(self,rowdim,coldim,row,col,rowspan,colspan):
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title+" Time Slices")
-        plt.imshow(self.imgdata[:,64,:], cmap=self.color)
-        ibar= plt.colorbar()
-        ibar.set_label(self.colorlabel)
-        plt.gca().invert_yaxis()
-        plt.xticks([])
-        plt.ylabel('Frame #')
-        plt.grid(False)
-    
-    #Animation Method: Allows animation of image throughout time. NOTE: Must state variable when used, eg: a = Example.animateplot(...).
-    def animateplot(self,numofslices,rowdim,coldim,row,col,rowspan,colspan):
+    def __init__(self,data,title,colorscale,colorlabel):
+        self.data = data
+        self.title = title
+        self.color = colorscale
+        self.colorlabel = colorlabel
+        
+    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
         plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
         plt.title(self.title)
+        plt.imshow((self.data[0] + self.data[2])/2, cmap = self.color)
+        plt.title(self.title)
+        ibar1 = plt.colorbar()
         plt.gca().invert_yaxis()
         plt.xticks([])
         plt.yticks([])
-        ims = []
-        for i in range(numofslices):
-            im = plt.imshow(self.imgdata[i], cmap = self.color)
-            ims.append([im])
-        return ims
+        plt.grid(False)
 
-#Figure information
-f=plt.figure(1, facecolor = 'white', edgecolor = 'k')
-plt.gcf().canvas.set_window_title('4: Time Slices')
+class Difference(object):
+    
+    def __init__(self,data,title,colorscale,colorlabel):
+        self.data = data
+        self.title = title
+        self.color = colorscale
+        self.colorlabel = colorlabel
+        
+    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
+        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
+        plt.title(self.title)
+        plt.imshow((self.data[0] - self.data[2]), cmap = self.color)
+        plt.title(self.title)
+        ibar1 = plt.colorbar()
+        plt.gca().invert_yaxis()
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(False)
 
 Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)')
 Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)')
 
-Data1.sliceplot(2,3,0,0,2,1)
-Data2.sliceplot(2,3,0,2,2,1)
+Average1 = Average(Data1.imgdata,'Average of Data 1','gray','Velocity (m/s)')
+Difference1 = Difference(Data1.imgdata,'Difference of Data 1','gray','Velocity (m/s)')
 
-ani1 = Data1.animateplot(512,2,3,0,1,1,1)
-ani2 = Data2.animateplot(512,2,3,1,1,1,1)
+Average2 = Average(Data2.imgdata,'Average of Data 2','gray','Velocity (m/s)')
+Difference2 = Difference(Data2.imgdata,'Difference of Data 2','gray','Velocity (m/s)')
 
-Ani1 = animation.ArtistAnimation(f, ani1, interval=100, blit=True,
-    repeat_delay=1000)
-Ani2 = animation.ArtistAnimation(f, ani2, interval=100, blit=True,
-    repeat_delay=1000)
 
-#Open Figure Maximized
+Average1.plot(2,2,0,0,1,1)
+Difference1.plot(2,2,0,1,1,1)
+Average2.plot(2,2,1,0,1,1)
+Difference2.plot(2,2,1,1,1,1)
+
 mng = plt.get_current_fig_manager()
 mng.window.showMaximized()
 plt.show()
