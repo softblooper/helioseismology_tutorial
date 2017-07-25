@@ -277,10 +277,11 @@ class StartPage(tk.Frame):
         
         greeting = tk.Label(self, text='Welcome to the Helioseismology Tutorial!',font=Main_Font)
         greeting2 = tk.Label(self, text='Select a tutorial to start.',font=Main_Font)
+        greeting3 = tk.Label(self, text='Maximize window for best display.',font=Main_Font)
         greeting.pack(pady=20)
-        greeting2.pack()
+        greeting2.pack(pady=20)
+        greeting3.pack()
         
-
 
 class Tutorial1(tk.Frame):
     
