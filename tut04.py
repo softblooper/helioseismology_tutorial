@@ -25,20 +25,12 @@ class FitsImage(object): #Allows creating of plots with data from fits files
     
     #Plotting method: Plots data and determines location and size of subplot. Grid option boolean.
     def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-        if self.dim == 3:
             plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
             plt.title(self.title)
-            plt.imshow(self.imgdata[0], cmap = self.color)
-            ibar = plt.colorbar()
-            ibar.set_label(self.colorlabel)
-            plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-        else:
-            plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-            plt.title(self.title)
-            plt.imshow(self.imgdata, cmap = self.color)
+            if self.dim == 3:
+                plt.imshow(self.imgdata[0], cmap = self.color)
+            else:
+                plt.imshow(self.imgdata, cmap = self.color)
             ibar = plt.colorbar()
             ibar.set_label(self.colorlabel)
             plt.gca().invert_yaxis()
