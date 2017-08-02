@@ -44,20 +44,12 @@ class FitsImage(object): #Allows creating of plots with data from fits files
     
     #Plotting method: Plots data and determines location and size of subplot. Grid option boolean.
     def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-        if self.dim == 3:
             plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
             plt.title(self.title)
-            plt.imshow(self.imgdata[0], cmap = self.color)
-            ibar = plt.colorbar()
-            ibar.set_label(self.colorlabel)
-            plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-        else:
-            plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-            plt.title(self.title)
-            plt.imshow(self.imgdata, cmap = self.color)
+            if self.dim == 3:
+                plt.imshow(self.imgdata[0], cmap = self.color)
+            else:
+                plt.imshow(self.imgdata, cmap = self.color)
             ibar = plt.colorbar()
             ibar.set_label(self.colorlabel)
             plt.gca().invert_yaxis()
@@ -277,9 +269,10 @@ class StartPage(tk.Frame):
         
         greeting = tk.Label(self, text='Welcome to the Helioseismology Tutorial!',font=Main_Font)
         greeting2 = tk.Label(self, text='Select a tutorial to start.',font=Main_Font)
+        greeting3 = tk.Label(self, text='Maximize window for best display.',font=Main_Font)
         greeting.pack(pady=20)
-        greeting2.pack()
-        
+        greeting2.pack(pady=20)
+        greeting3.pack()
 
 
 class Tutorial1(tk.Frame):
@@ -355,11 +348,11 @@ class Tutorial2(tk.Frame):
         tut2.pack(pady=5)
         
         tut3 = tk.Button(tutframe, text='Tutorial 3',
-            command=lambda: controller.show_frame(Tutorial4))
+            command=lambda: controller.show_frame(Tutorial3))
         tut3.pack(pady=5)
         
         tut4 = tk.Button(tutframe, text='Tutorial 4',
-            command=lambda: controller.show_frame(StartPage))
+            command=lambda: controller.show_frame(Tutorial4))
         tut4.pack(pady=5)
         
         tut5 = tk.Button(tutframe, text='Tutorial 5',
