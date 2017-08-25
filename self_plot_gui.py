@@ -33,41 +33,6 @@ class FitsImage(object): #Allows creating of plots with data from fits files
         self.shape = np.shape(self.imgdata)
         self.dim = len(self.shape)
     
-    #Plotting method: Plots data and determines location and size of subplot. Grid option boolean.
-    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-        if self.dim == 3:
-            plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-            plt.title(self.title)
-            plt.imshow(self.imgdata[0], cmap = self.color)
-            ibar = plt.colorbar()
-            ibar.set_label(self.colorlabel)
-            plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-        else:
-            plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-            plt.title(self.title)
-            plt.imshow(self.imgdata, cmap = self.color)
-            ibar = plt.colorbar()
-            ibar.set_label(self.colorlabel)
-            plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-    
-    #Plot Time Slices Method: Plots the layout of a slice of the datacube in order to show change over time.
-    def sliceplot(self,rowdim,coldim,row,col,rowspan,colspan):
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title+" Time Slices")
-        plt.imshow(self.imgdata[:,64,:], cmap=self.color)
-        ibar= plt.colorbar()
-        ibar.set_label(self.colorlabel)
-        plt.gca().invert_yaxis()
-        plt.xticks([])
-        plt.ylabel('Frame #')
-        plt.grid(False)
-    
     #Animation Method: Allows animation of image throughout time. NOTE: Must state variable when used, eg: a = Example.animateplot(...).
     def animateplot(self,numofslices,rowdim,coldim,row,col,rowspan,colspan): #Fix animations. Not working?
         plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
@@ -80,33 +45,22 @@ class FitsImage(object): #Allows creating of plots with data from fits files
             im = plt.imshow(self.imgdata[i], cmap = self.color)
             ims.append([im])
         return ims
+    
+    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
+            #plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
+            plt.figure
+            plt.title(self.title)
+            if self.dim == 3:
+                plt.imshow(self.imgdata[0], cmap = self.color)
+            else:
+                plt.imshow(self.imgdata, cmap = self.color)
+            ibar = plt.colorbar()
+            ibar.set_label(self.colorlabel)
+            plt.gca().invert_yaxis()
+            plt.xticks([])
+            plt.yticks([])
+            plt.grid(False)
 
-class ScatterPlot(object): #Creates a scatterplot with given data
-    
-    #Initializes object, set paramaters for data used and other plot info
-    def __init__(self,xdata,ydata,title,xlabel,ylabel):
-        self.xdata = xdata
-        self.ydata = ydata
-        self.title = title
-        self.xlabel = xlabel
-        self.ylabel = ylabel
-    
-    #Plotting method: Plots data and determines where to locate subplot
-    def plot(self,rowdim,coldim,row,col,rowspan,colspan,xlimmin,xlimmax,ylimmin,ylimmax):
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title)
-        plt.plot(self.xdata, self.ydata,',', color='black')
-        plt.xlabel(self.xlabel)
-        plt.ylabel(self.ylabel)
-        plt.xlim(xlimmin, xlimmax)
-        plt.ylim(ylimmin, ylimmax)
-
-    #Line method: Draws a line with set initial and end points.
-    def line(self,xi,xf,yi,yf):
-        x = np.linspace(xi,xf)
-        y = np.linspace(yi,yf)
-        plt.plot(x, y, color='black', linewidth = 1.0, linestyle = '-')
-    
 class Average(object): #Finds the average between two data sets and plots it.
     
     def __init__(self,data,title,colorscale,colorlabel):
@@ -152,13 +106,13 @@ Magnetogram = FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)')
 Dopplergram = FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)')
 Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)')
 Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)')
-D1vD2 = ScatterPlot(Data1.imgdata[0],Data2.imgdata[0],'Data 1 vs Data 2','Data 1 (m/s)','Data 2 (m/s)')
+'''D1vD2 = ScatterPlot(Data1.imgdata[0],Data2.imgdata[0],'Data 1 vs Data 2','Data 1 (m/s)','Data 2 (m/s)')
 Average1 = Average(Data1.imgdata,'Average of Data 1','gray','Velocity (m/s)')
 Difference1 = Difference(Data1.imgdata,'Difference of Data 1','gray','Velocity (m/s)')
 Average2 = Average(Data2.imgdata,'Average of Data 2','gray','Velocity (m/s)')
-Difference2 = Difference(Data2.imgdata,'Difference of Data 2','gray','Velocity (m/s)')
+Difference2 = Difference(Data2.imgdata,'Difference of Data 2','gray','Velocity (m/s)')'''
 
-Data = (Intensity, Magnetogram, Dopplergram, Data1, Data2, D1vD2, Average1, Difference1,Average2,Difference2)
+Data = (Intensity, Magnetogram, Dopplergram, Data1, Data2) #D1vD2, Average1, Difference1,Average2,Difference2)
 Options = ('Intensity', 'Magnetogram', 'Dopplergram', 'Data 1', 'Data 2')
 DataIndex = (0, 1, 2, 3, 4)
 
@@ -174,6 +128,17 @@ def setgrid(number):
 #------------------------------------------------------------------------------#
 #--GUI--
 
+'''class RangeLabels(tk.Frame): #Revise this. Frame has to be argument.
+
+    def __init__(self,frame,*args,**kwargs):
+
+        tk.Frame.__init__(self,*args,**kwargs)
+
+        self.minlabel = tk.Label(frame,text = 'Min')
+        self.minlabel.grid(row=0,column=0)
+        self.maxlabel = tk.Label(frame, text = 'Max')
+        self.maxlabel.grid(row=0,column=1)'''
+
 class Helioseismology(tk.Tk):
     
     def __init__(self,*args,**kwargs):
@@ -184,193 +149,219 @@ class Helioseismology(tk.Tk):
         
         def plot():
             f.clear()
-            #index1 = plot1.curselection()[0]
-            index1 = DataOpts[data1x.get()]
-            if gridoption == 1:
-                plt.subplot2grid((1, 1), (0, 0))
-                print(gridoption)
-            elif gridoption == 2:
-                plt.subplot2grid((1, 2), (0, 0))
-                print(gridoption)
-            elif gridoption == 3:
-                plt.subplot2grid((1, 3), (0, 0))
-                print(gridoption)
-            elif gridoption == 4:
-                plt.subplot2grid((2, 2), (0, 0))
-                print(gridoption)
-            plt.title(Data[index1].title)
-            if self.imgcheck1:
-                if Data[index1].dim == 3:
-                    plt.imshow(Data[index1].imgdata[0], cmap = Data[index1].color)
+            empty = ''
+            index1 = DataOpts[datax.get()]
+            index2 = DataOpts[datay.get()]
+            minx = minrangex.get()
+            maxx = maxrangex.get()
+            miny = minrangey.get()
+            maxy = maxrangey.get()
+            keepplot = self.keepplot.get()
+            try:
+                if (Data[index1].dim == 3) and (Data[index2].dim == 3):
+                    plt.plot(Data[index1].imgdata[0],Data[index2].imgdata[0],',',color='black')
                 else:
-                    plt.imshow(Data[index1].imgdata, cmap = Data[index1].color)
-                ibar = plt.colorbar()
-                ibar.set_label(Data[index1].colorlabel)
-                plt.gca().invert_yaxis()
-                plt.xticks([])
-                plt.yticks([])
-                plt.grid(False)
+                    plt.plot(Data[index1].imgdata,Data[index2].imgdata,',',color='black')
+                plt.xlabel(Data[index1].colorlabel)
+                plt.ylabel(Data[index2].colorlabel)
+                if (minx and maxx):
+                    minx = int(minx)
+                    maxx = int(maxx)
+                    plt.xlim(minx,maxx)
+                else:
+                    None
+                if (miny and maxy):
+                    miny = int(miny)
+                    maxy = int(maxy)
+                    plt.ylim(miny,maxy)
+                else:
+                    None
                 f.canvas.draw()
-                self.statusbar.config(text="Showing image of "+Data[index1].title)
+                self.statusbar.config(text="Showing plot of "+Data[index1].title+" against "+Data[index2].title)
+            except Exception:
+                self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
+            
+        def viewimg():
+            f.clear()
+            index = DataOpts[imgchoice.get()]
+            if Data[index].dim == 3:
+                plt.imshow(Data[index].imgdata[0], cmap = Data[index].color)
             else:
-                #index2 = plot2.curselection()[0]
-                index2 = DataOpts[data1y.get()]
-                try:
-                    if (Data[index1].dim == 3) and (Data[index2].dim == 3):
-                        plt.plot(Data[index1].imgdata[0],Data[index2].imgdata[0],',',color='black')
-                    else:
-                        plt.plot(Data[index1].imgdata,Data[index2].imgdata,',',color='black')
-                    plt.xlabel(Data[index1].colorlabel)
-                    plt.ylabel(Data[index2].colorlabel)
-                    f.canvas.draw()
-                    self.statusbar.config(text="Showing plot of "+Data[index1].title+" against "+Data[index2].title)
-                except Exception:
-                    self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
+                plt.imshow(Data[index].imgdata, cmap = Data[index].color)
+            ibar = plt.colorbar()
+            ibar.set_label(Data[index].colorlabel)
+            plt.gca().invert_yaxis()
+            plt.xticks([])
+            plt.yticks([])
+            plt.grid(False)
+            f.canvas.draw()
+            self.statusbar.config(text="Showing image of "+Data[index].title)
         
         def imgcheckoption():
-            self.imgcheck1 = not self.imgcheck1
+            self.imgcheck = not self.imgcheck
+            
+        def keepcheckoption():
+            self.keepplot = not self.keepplot
         
         container=tk.Frame(self)
         container.pack(side='top',fill='both',expand=True)
         container.grid_rowconfigure(0,weight=1)
         container.grid_columnconfigure(0,weight=1)
         
-        self.menu = tk.Frame(container)
-        self.menu.pack(side=tk.TOP, fill=tk.X)
+        menu = tk.Frame(container)
+        menu.pack(side=tk.TOP, fill=tk.X)
         
-        self.statusbar = tk.Label(self.menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='white',width=60,anchor='w')
+        self.statusbar = tk.Label(menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='white',width=60,anchor='w')
         self.statusbar.pack(anchor='nw',side=tk.LEFT,pady=(3,3))
         
-        self.multiplot4 = tk.Button(self.menu, text='2x2 Grid', command=setgrid(4))
-        self.multiplot4.pack(side=tk.RIGHT)
+        frame = tk.Frame(container)
+        frame.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
         
-        self.multiplot3 = tk.Button(self.menu, text='1x3 Grid', command=setgrid(3))
-        self.multiplot3.pack(side=tk.RIGHT)
+        sideframe = tk.Frame(frame)
+        sideframe.pack(side=tk.LEFT,anchor='n')
         
-        self.multiplot2 = tk.Button(self.menu, text='1x2 Grid', command=setgrid(2))
-        self.multiplot2.pack(side=tk.RIGHT)
+        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
+        scatterframe.pack(side=tk.TOP,fill=tk.X)
         
-        self.multiplot1 = tk.Button(self.menu, text='1x1 Grid', command=setgrid(1))
-        self.multiplot1.pack(side=tk.RIGHT)
+        xaxis = tk.Label(scatterframe,text='X-Axis')
+        xaxis.pack(side=tk.TOP)
+        datax = tk.StringVar()
+        datax.set('')
+        plotx = tk.OptionMenu(scatterframe,datax,*Options)
+        plotx.pack(side=tk.TOP)
         
-        self.frame = tk.Frame(container)
-        self.frame.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+        yaxis = tk.Label(scatterframe,text='Y-Axis')
+        yaxis.pack(side=tk.TOP)
+        datay = tk.StringVar()
+        datay.set('')
+        ploty = tk.OptionMenu(scatterframe,datay,*Options)
+        ploty.pack(side=tk.TOP)
         
-        self.sideframe = tk.Frame(self.frame)
-        self.sideframe.pack(side=tk.LEFT,anchor='n')#,fill=tk.BOTH,expand=True)
+        self.keepplot = tk.IntVar()
+        self.keepplot.set(0)
+        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
+        keepplotopt.pack(side=tk.TOP)
         
-        plotframe1 = tk.LabelFrame(self.sideframe, text="Plot 1 Tools")
-        #plotframe1.pack(side=tk.TOP)
-        plotframe1.grid(row=0)
+        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
+        plotbutton.pack(side=tk.TOP,pady=(0,5))
         
-        xaxis1 = tk.Label(plotframe1,text='Image/X-Axis')
-        xaxis1.pack(side=tk.TOP)
-        data1x = tk.StringVar()
-        data1x.set('Intensity')
-        plot1x = tk.OptionMenu(plotframe1,data1x,*Options)
-        plot1x.pack(side=tk.TOP)
+        imgframe = tk.LabelFrame(sideframe, text="Image Plots")
+        imgframe.pack(side=tk.TOP,fill=tk.X)
         
-        self.imgcheck1 = False
-        imgoption1 = tk.Checkbutton(plotframe1,text="Show FITS Image",command=imgcheckoption)
-        imgoption1.pack(side=tk.TOP)
+        imgtext = tk.Label(imgframe,text='Image')
+        imgtext.pack(side=tk.TOP)
         
-        yaxis1 = tk.Label(plotframe1,text='Y-Axis')
-        yaxis1.pack(side=tk.TOP)
-        data1y = tk.StringVar()
-        data1y.set('Intensity')
-        plot1y = tk.OptionMenu(plotframe1,data1y,*Options)
-        plot1y.pack(side=tk.TOP)
+        imgchoice = tk.StringVar()
+        imgchoice.set('')
+        imgmenu = tk.OptionMenu(imgframe,imgchoice,*Options)
+        imgmenu.pack(side=tk.TOP)
         
-        plotbutton1 = tk.Button(plotframe1, text='Plot', command=plot)
-        plotbutton1.pack(side=tk.TOP)
+        self.imgani = tk.IntVar()#
+        imganiopt = tk.Checkbutton(imgframe, text = 'Animate',variable=self.imgani,command=None)
+        imganiopt.pack(side=tk.TOP)
         
-        self.plotframe2 = tk.LabelFrame(self.sideframe, text="Plot 2 Tools")
-        #self.plotframe2.pack(side=tk.TOP)
-        self.plotframe2.grid(row=1)
+        self.keepimg = tk.IntVar()#
+        keepimgopt = tk.Checkbutton(imgframe, text = "Open in new window",variable=self.keepimg,command=None) #Implement feature
+        keepimgopt.pack(side=tk.TOP)
         
-        xaxis2 = tk.Label(self.plotframe2,text='Image/X-Axis')
-        xaxis2.pack(side=tk.TOP)
-        data2x = tk.StringVar()
-        data2x.set('Intensity')
-        plot2x = tk.OptionMenu(self.plotframe2,data2x,*Options)
-        plot2x.pack(side=tk.TOP)
+        imgbutton = tk.Button(imgframe, text='View', command=viewimg)
+        imgbutton.pack(side=tk.TOP,pady=(0,5))
         
-        self.imgcheck2 = False
-        imgoption2 = tk.Checkbutton(self.plotframe2,text="Show FITS Image",command=imgcheckoption) #fix
-        imgoption2.pack(side=tk.TOP)
+        computeframe = tk.LabelFrame(sideframe, text='Generate')
+        computeframe.pack(side=tk.TOP,fill=tk.X)
         
-        yaxis2 = tk.Label(self.plotframe2,text='Y-Axis')
-        yaxis2.pack(side=tk.TOP)
-        data2y = tk.StringVar()
-        data2y.set('Intensity')
-        plot2y = tk.OptionMenu(self.plotframe2,data2y,*Options)
-        plot2y.pack(side=tk.TOP)
+        cmpchoice = tk.StringVar()
+        cmpchoice.set('')
+        cmpmenu = tk.OptionMenu(computeframe,imgchoice,*Options)
+        cmpmenu.pack(side=tk.TOP)
         
-        plotbutton2 = tk.Button(self.plotframe2, text='Plot', command=plot)
-        plotbutton2.pack(side=tk.TOP)
+        avgdif = tk.Frame(computeframe)
+        avgdif.pack(side=tk.TOP)
         
-        plotframe3 = tk.LabelFrame(self.sideframe, text="Plot 3 Tools")
-        #plotframe3.pack(side=tk.TOP)
-        plotframe3.grid(row=2)
+        self.imgavg = tk.IntVar()#
+        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
+        imgavgopt.grid(row=0,column=0)
         
-        xaxis3 = tk.Label(plotframe3,text='Image/X-Axis')
-        xaxis3.pack(side=tk.TOP)
-        data3x = tk.StringVar()
-        data3x.set('Intensity')
-        plot3x = tk.OptionMenu(plotframe3,data3x,*Options)
-        plot3x.pack(side=tk.TOP)
+        self.imgdif = tk.IntVar()#
+        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
+        imgdifopt.grid(row=0,column=1)
         
-        self.imgcheck3 = False
-        imgoption3 = tk.Checkbutton(plotframe3,text="Show FITS Image",command=imgcheckoption) #fix
-        imgoption3.pack(side=tk.TOP)
+        self.powerspectra = tk.IntVar()#
+        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
+        powerspectraopt.pack(side=tk.TOP)
         
-        yaxis3 = tk.Label(plotframe3,text='Y-Axis')
-        yaxis3.pack(side=tk.TOP)
-        data3y = tk.StringVar()
-        data3y.set('Intensity')
-        plot3y = tk.OptionMenu(plotframe3,data1y,*Options)
-        plot3y.pack(side=tk.TOP)
+        computebutton = tk.Button(computeframe, text='Compute', command=None)
+        computebutton.pack(side=tk.TOP,pady=(0,5))
         
-        plotbutton3 = tk.Button(plotframe3, text='Plot', command=plot)
-        plotbutton3.pack(side=tk.TOP)
+        toolsframe = tk.LabelFrame(sideframe,text='Plot Tools')
+        toolsframe.pack(side=tk.TOP,fill=tk.X)
         
-        plotframe4 = tk.LabelFrame(self.sideframe, text="Plot 4 Tools")
-        #plotframe4.pack(side=tk.TOP)
-        plotframe4.grid(row=3)
+        xtools = tk.Label(toolsframe,text='X')
+        xtools.pack(side=tk.TOP)
         
-        xaxis4 = tk.Label(plotframe4,text='Image/X-Axis')
-        xaxis4.pack(side=tk.TOP)
-        data4x = tk.StringVar()
-        data4x.set('Intensity')
-        plot4x = tk.OptionMenu(plotframe4,data4x,*Options)
-        plot4x.pack(side=tk.TOP)
+        rangeframex = tk.Frame(toolsframe)
+        rangeframex.pack(side=tk.TOP)
         
-        self.imgcheck4 = False
-        imgoption4 = tk.Checkbutton(plotframe4,text="Show FITS Image",command=imgcheckoption) #fix
-        imgoption4.pack(side=tk.TOP)
+        minlabelx = tk.Label(rangeframex,text = 'Min')
+        minlabelx.grid(row=0,column=0)
+        maxlabelx = tk.Label(rangeframex, text = 'Max')
+        maxlabelx.grid(row=0,column=1)
         
-        yaxis4 = tk.Label(plotframe4,text='Y-Axis')
-        yaxis4.pack(side=tk.TOP)
-        data4y = tk.StringVar()
-        data4y.set('Intensity')
-        plot4y = tk.OptionMenu(plotframe4,data1y,*Options)
-        plot4y.pack(side=tk.TOP)
+        minrangex = tk.Entry(rangeframex,width = 4)
+        minrangex.grid(row=1,column=0,padx=5)
         
-        plotbutton4 = tk.Button(plotframe4, text='Plot', command=plot)
-        plotbutton4.pack(side=tk.TOP)
+        maxrangex = tk.Entry(rangeframex,width = 4)
+        maxrangex.grid(row=1,column=1,padx=5)
+        
+        ytools = tk.Label(toolsframe,text='Y')
+        ytools.pack(side=tk.TOP)
+        
+        rangeframey = tk.Frame(toolsframe)
+        rangeframey.pack(side=tk.TOP)
+        
+        minlabely = tk.Label(rangeframey,text = 'Min')
+        minlabely.grid(row=0,column=0)
+        maxlabely = tk.Label(rangeframey, text = 'Max')
+        maxlabely.grid(row=0,column=1)
+        
+        minrangey = tk.Entry(rangeframey,width = 4)
+        minrangey.grid(row=1,column=0,padx=5)
+        
+        maxrangey = tk.Entry(rangeframey,width = 4)
+        maxrangey.grid(row=1,column=1,padx=5)
+        
+        ztools = tk.Label(toolsframe,text='Z')
+        ztools.pack(side=tk.TOP)
+        
+        rangeframez = tk.Frame(toolsframe)
+        rangeframez.pack(side=tk.TOP)
+        
+        minlabelz = tk.Label(rangeframez,text = 'Min')
+        minlabelz.grid(row=0,column=0)
+        maxlabelz = tk.Label(rangeframez, text = 'Max')
+        maxlabelz.grid(row=0,column=1)
+        
+        minrangez = tk.Entry(rangeframez,width = 4) #Implement range feature
+        minrangez.grid(row=2,column=0,padx=5)
+        
+        maxrangez = tk.Entry(rangeframez,width = 4)
+        maxrangez.grid(row=2,column=1,padx=5)
+        
+        documentation = tk.Button(sideframe, text='Documentation',command=None)
+        documentation.pack(side=tk.TOP,pady=(10,0))
         
         #plot1.bind('<ButtonRelease-1>', tutorialSelect1)
         
         f=plt.figure()
         
-        canvas = FigureCanvasTkAgg(f, self.frame)
+        canvas = FigureCanvasTkAgg(f, frame)
         canvas.show()
         canvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
         
-        toolbar = NavigationToolbar2TkAgg(canvas, self.frame)
+        toolbar = NavigationToolbar2TkAgg(canvas, frame)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 app = Helioseismology()
-app.wm_attributes('-zoomed', True)
+#app.wm_attributes('-zoomed', True)
 app.mainloop()
