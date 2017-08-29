@@ -22,11 +22,12 @@ import numpy as np
 class FitsImage(object): #Allows creating of plots with data from fits files
     
     #Initializes object, converts fits data into Python array. Detects shape for corresponding plot.
-    def __init__(self,file,title,colorscale,colorlabel):
+    def __init__(self,file,title,colorscale,colorlabel,shortname):
         self.file = file
         self.title = title
         self.color = colorscale
         self.colorlabel = colorlabel
+        self.shortname = shortname
         
         self.imgdata = fits.getdata(self.file)
         
@@ -101,11 +102,11 @@ class Difference(object): #Finds the difference between two data sets and plots 
 
 #------------------------------------------------------------------------------#
 #--Tutorials--
-Intensity = FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity')
-Magnetogram = FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)')
-Dopplergram = FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)')
-Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)')
-Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)')
+Intensity = FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','intensity')
+Magnetogram = FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)','magnetogram')
+Dopplergram = FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)','dopplergram')
+Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)','data1')
+Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2')
 '''D1vD2 = ScatterPlot(Data1.imgdata[0],Data2.imgdata[0],'Data 1 vs Data 2','Data 1 (m/s)','Data 2 (m/s)')
 Average1 = Average(Data1.imgdata,'Average of Data 1','gray','Velocity (m/s)')
 Difference1 = Difference(Data1.imgdata,'Difference of Data 1','gray','Velocity (m/s)')
@@ -148,15 +149,19 @@ class Helioseismology(tk.Tk):
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
         
         def plot():
-            f.clear()
-            empty = ''
+            keep = self.keepplot.get()
+            if keep:
+                g = plt.figure(2)
+                g.clear()
+            else:
+                self.f.clear()
+                plt.figure(1)
             index1 = DataOpts[datax.get()]
             index2 = DataOpts[datay.get()]
             minx = minrangex.get()
             maxx = maxrangex.get()
             miny = minrangey.get()
             maxy = maxrangey.get()
-            keepplot = self.keepplot.get()
             try:
                 if (Data[index1].dim == 3) and (Data[index2].dim == 3):
                     plt.plot(Data[index1].imgdata[0],Data[index2].imgdata[0],',',color='black')
@@ -168,40 +173,106 @@ class Helioseismology(tk.Tk):
                     minx = int(minx)
                     maxx = int(maxx)
                     plt.xlim(minx,maxx)
-                else:
-                    None
                 if (miny and maxy):
                     miny = int(miny)
                     maxy = int(maxy)
                     plt.ylim(miny,maxy)
+                if keep:
+                    kept = tk.Toplevel()
+                    
+                    keptcanvas = FigureCanvasTkAgg(g, kept)
+                    keptcanvas.show()
+                    keptcanvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
+                    
+                    kepttoolbar = NavigationToolbar2TkAgg(keptcanvas, kept)
+                    kepttoolbar.update()
+                    keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
                 else:
-                    None
-                f.canvas.draw()
+                    self.f.canvas.draw()
                 self.statusbar.config(text="Showing plot of "+Data[index1].title+" against "+Data[index2].title)
+                minrangex.delete(0,tk.END)
+                maxrangex.delete(0,tk.END)
+                minrangey.delete(0,tk.END)
+                maxrangey.delete(0,tk.END)
             except Exception:
                 self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
             
         def viewimg():
-            f.clear()
-            index = DataOpts[imgchoice.get()]
-            if Data[index].dim == 3:
-                plt.imshow(Data[index].imgdata[0], cmap = Data[index].color)
+            keep = self.keepimg.get()
+            if keep:
+                g = plt.figure(2)
+                g.clear()
             else:
-                plt.imshow(Data[index].imgdata, cmap = Data[index].color)
+                self.f.clear()
+                plt.figure(1)
+            index = DataOpts[imgchoice.get()]
+            minx = minrangex.get()
+            maxx = maxrangex.get()
+            miny = minrangey.get()
+            maxy = maxrangey.get()
+            minz = minrangez.get()
+            maxz = maxrangez.get()
+            if Data[index].dim == 3:
+                if (minz and maxz):
+                    minz = int(minz)
+                    maxz = int(maxz)
+                    plt.imshow(Data[index].imgdata[0], cmap = Data[index].color, vmin=minz, vmax=maxz)
+                else:
+                    plt.imshow(Data[index].imgdata[0], cmap = Data[index].color)
+            else:
+                if (minz and maxz):
+                    minz = int(minz)
+                    maxz = int(maxz)
+                    plt.imshow(Data[index].imgdata, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                else:
+                    plt.imshow(Data[index].imgdata, cmap = Data[index].color)
+            if (minx and maxx):
+                minx = int(minx)
+                maxx = int(maxx)
+                plt.xlim(minx,maxx)
+            if (miny and maxy):
+                miny = int(miny)
+                maxy = int(maxy)
+                plt.ylim(maxy,miny)
             ibar = plt.colorbar()
             ibar.set_label(Data[index].colorlabel)
             plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-            f.canvas.draw()
+            #plt.xticks([])
+            #plt.yticks([])
+            plt.xlabel('pix')
+            plt.ylabel('pix')
+            #plt.grid(False)
+            if keep:
+                kept = tk.Toplevel()
+                
+                keptcanvas = FigureCanvasTkAgg(g, kept)
+                keptcanvas.show()
+                keptcanvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
+                
+                kepttoolbar = NavigationToolbar2TkAgg(keptcanvas, kept)
+                kepttoolbar.update()
+                keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            else:
+                self.f.canvas.draw()
             self.statusbar.config(text="Showing image of "+Data[index].title)
+            minrangex.delete(0,tk.END)
+            maxrangex.delete(0,tk.END)
+            minrangey.delete(0,tk.END)
+            maxrangey.delete(0,tk.END)
+            minrangez.delete(0,tk.END)
+            maxrangez.delete(0,tk.END)
         
-        def imgcheckoption():
-            self.imgcheck = not self.imgcheck
+        def imgaverage():
+            index = DataOpts[cmpchoice.get()]
+            average = (self.data[0] + self.data[2])/2
+            hdu = fits.PrimaryHDU(average)
+            name = 'avg_' + self.shortname
+            hdu.writeto(name)
             
-        def keepcheckoption():
-            self.keepplot = not self.keepplot
+        def compute():
+            avg = self.imgavg.get()
+            if avg:
+                imgaverage()
         
         container=tk.Frame(self)
         container.pack(side='top',fill='both',expand=True)
@@ -237,7 +308,7 @@ class Helioseismology(tk.Tk):
         ploty = tk.OptionMenu(scatterframe,datay,*Options)
         ploty.pack(side=tk.TOP)
         
-        self.keepplot = tk.IntVar()
+        self.keepplot = tk.BooleanVar()
         self.keepplot.set(0)
         keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
         keepplotopt.pack(side=tk.TOP)
@@ -256,11 +327,11 @@ class Helioseismology(tk.Tk):
         imgmenu = tk.OptionMenu(imgframe,imgchoice,*Options)
         imgmenu.pack(side=tk.TOP)
         
-        self.imgani = tk.IntVar()#
+        self.imgani = tk.BooleanVar()#
         imganiopt = tk.Checkbutton(imgframe, text = 'Animate',variable=self.imgani,command=None)
         imganiopt.pack(side=tk.TOP)
         
-        self.keepimg = tk.IntVar()#
+        self.keepimg = tk.BooleanVar()#
         keepimgopt = tk.Checkbutton(imgframe, text = "Open in new window",variable=self.keepimg,command=None) #Implement feature
         keepimgopt.pack(side=tk.TOP)
         
@@ -272,21 +343,21 @@ class Helioseismology(tk.Tk):
         
         cmpchoice = tk.StringVar()
         cmpchoice.set('')
-        cmpmenu = tk.OptionMenu(computeframe,imgchoice,*Options)
+        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*Options)
         cmpmenu.pack(side=tk.TOP)
         
         avgdif = tk.Frame(computeframe)
         avgdif.pack(side=tk.TOP)
         
-        self.imgavg = tk.IntVar()#
+        self.imgavg = tk.BooleanVar()#
         imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
         imgavgopt.grid(row=0,column=0)
         
-        self.imgdif = tk.IntVar()#
+        self.imgdif = tk.BooleanVar()#
         imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
         imgdifopt.grid(row=0,column=1)
         
-        self.powerspectra = tk.IntVar()#
+        self.powerspectra = tk.BooleanVar()#
         powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
         powerspectraopt.pack(side=tk.TOP)
         
@@ -307,10 +378,10 @@ class Helioseismology(tk.Tk):
         maxlabelx = tk.Label(rangeframex, text = 'Max')
         maxlabelx.grid(row=0,column=1)
         
-        minrangex = tk.Entry(rangeframex,width = 4)
+        minrangex = tk.Entry(rangeframex,width = 6)
         minrangex.grid(row=1,column=0,padx=5)
         
-        maxrangex = tk.Entry(rangeframex,width = 4)
+        maxrangex = tk.Entry(rangeframex,width = 6)
         maxrangex.grid(row=1,column=1,padx=5)
         
         ytools = tk.Label(toolsframe,text='Y')
@@ -324,10 +395,10 @@ class Helioseismology(tk.Tk):
         maxlabely = tk.Label(rangeframey, text = 'Max')
         maxlabely.grid(row=0,column=1)
         
-        minrangey = tk.Entry(rangeframey,width = 4)
+        minrangey = tk.Entry(rangeframey,width = 6)
         minrangey.grid(row=1,column=0,padx=5)
         
-        maxrangey = tk.Entry(rangeframey,width = 4)
+        maxrangey = tk.Entry(rangeframey,width = 6)
         maxrangey.grid(row=1,column=1,padx=5)
         
         ztools = tk.Label(toolsframe,text='Z')
@@ -341,20 +412,20 @@ class Helioseismology(tk.Tk):
         maxlabelz = tk.Label(rangeframez, text = 'Max')
         maxlabelz.grid(row=0,column=1)
         
-        minrangez = tk.Entry(rangeframez,width = 4) #Implement range feature
+        minrangez = tk.Entry(rangeframez,width = 6) #Implement range feature
         minrangez.grid(row=2,column=0,padx=5)
         
-        maxrangez = tk.Entry(rangeframez,width = 4)
-        maxrangez.grid(row=2,column=1,padx=5)
+        maxrangez = tk.Entry(rangeframez,width = 6)
+        maxrangez.grid(row=2,column=1,padx=5,pady=(0,5))
         
         documentation = tk.Button(sideframe, text='Documentation',command=None)
         documentation.pack(side=tk.TOP,pady=(10,0))
         
         #plot1.bind('<ButtonRelease-1>', tutorialSelect1)
         
-        f=plt.figure()
+        self.f=plt.figure(1)
         
-        canvas = FigureCanvasTkAgg(f, frame)
+        canvas = FigureCanvasTkAgg(self.f, frame)
         canvas.show()
         canvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
         
