@@ -291,79 +291,6 @@ class Helioseismology(tk.Tk):
         sideframe = tk.Frame(frame)
         sideframe.pack(side=tk.LEFT,anchor='n')
         
-        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
-        scatterframe.pack(side=tk.TOP,fill=tk.X)
-        
-        xaxis = tk.Label(scatterframe,text='X-Axis')
-        xaxis.pack(side=tk.TOP)
-        datax = tk.StringVar()
-        datax.set('')
-        plotx = tk.OptionMenu(scatterframe,datax,*Options)
-        plotx.pack(side=tk.TOP)
-        
-        yaxis = tk.Label(scatterframe,text='Y-Axis')
-        yaxis.pack(side=tk.TOP)
-        datay = tk.StringVar()
-        datay.set('')
-        ploty = tk.OptionMenu(scatterframe,datay,*Options)
-        ploty.pack(side=tk.TOP)
-        
-        self.keepplot = tk.BooleanVar()
-        self.keepplot.set(0)
-        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
-        keepplotopt.pack(side=tk.TOP)
-        
-        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
-        plotbutton.pack(side=tk.TOP,pady=(0,5))
-        
-        imgframe = tk.LabelFrame(sideframe, text="Image Plots")
-        imgframe.pack(side=tk.TOP,fill=tk.X)
-        
-        imgtext = tk.Label(imgframe,text='Image')
-        imgtext.pack(side=tk.TOP)
-        
-        imgchoice = tk.StringVar()
-        imgchoice.set('')
-        imgmenu = tk.OptionMenu(imgframe,imgchoice,*Options)
-        imgmenu.pack(side=tk.TOP)
-        
-        self.imgani = tk.BooleanVar()#
-        imganiopt = tk.Checkbutton(imgframe, text = 'Animate',variable=self.imgani,command=None)
-        imganiopt.pack(side=tk.TOP)
-        
-        self.keepimg = tk.BooleanVar()#
-        keepimgopt = tk.Checkbutton(imgframe, text = "Open in new window",variable=self.keepimg,command=None) #Implement feature
-        keepimgopt.pack(side=tk.TOP)
-        
-        imgbutton = tk.Button(imgframe, text='View', command=viewimg)
-        imgbutton.pack(side=tk.TOP,pady=(0,5))
-        
-        computeframe = tk.LabelFrame(sideframe, text='Generate')
-        computeframe.pack(side=tk.TOP,fill=tk.X)
-        
-        cmpchoice = tk.StringVar()
-        cmpchoice.set('')
-        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*Options)
-        cmpmenu.pack(side=tk.TOP)
-        
-        avgdif = tk.Frame(computeframe)
-        avgdif.pack(side=tk.TOP)
-        
-        self.imgavg = tk.BooleanVar()#
-        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
-        imgavgopt.grid(row=0,column=0)
-        
-        self.imgdif = tk.BooleanVar()#
-        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
-        imgdifopt.grid(row=0,column=1)
-        
-        self.powerspectra = tk.BooleanVar()#
-        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
-        powerspectraopt.pack(side=tk.TOP)
-        
-        computebutton = tk.Button(computeframe, text='Compute', command=None)
-        computebutton.pack(side=tk.TOP,pady=(0,5))
-        
         toolsframe = tk.LabelFrame(sideframe,text='Plot Tools')
         toolsframe.pack(side=tk.TOP,fill=tk.X)
         
@@ -417,6 +344,79 @@ class Helioseismology(tk.Tk):
         
         maxrangez = tk.Entry(rangeframez,width = 6)
         maxrangez.grid(row=2,column=1,padx=5,pady=(0,5))
+        
+        imgframe = tk.LabelFrame(sideframe, text="Image Plots")
+        imgframe.pack(side=tk.TOP,fill=tk.X)
+        
+        imgtext = tk.Label(imgframe,text='Image')
+        imgtext.pack(side=tk.TOP)
+        
+        imgchoice = tk.StringVar()
+        imgchoice.set('')
+        imgmenu = tk.OptionMenu(imgframe,imgchoice,*Options)
+        imgmenu.pack(side=tk.TOP)
+        
+        self.imgani = tk.BooleanVar()#
+        imganiopt = tk.Checkbutton(imgframe, text = 'Animate',variable=self.imgani,command=None)
+        imganiopt.pack(side=tk.TOP)
+        
+        self.keepimg = tk.BooleanVar()#
+        keepimgopt = tk.Checkbutton(imgframe, text = "Open in new window",variable=self.keepimg,command=None) #Implement feature
+        keepimgopt.pack(side=tk.TOP)
+        
+        imgbutton = tk.Button(imgframe, text='View', command=viewimg)
+        imgbutton.pack(side=tk.TOP,pady=(0,5))
+        
+        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
+        scatterframe.pack(side=tk.TOP,fill=tk.X)
+        
+        xaxis = tk.Label(scatterframe,text='X-Axis')
+        xaxis.pack(side=tk.TOP)
+        datax = tk.StringVar()
+        datax.set('')
+        plotx = tk.OptionMenu(scatterframe,datax,*Options)
+        plotx.pack(side=tk.TOP)
+        
+        yaxis = tk.Label(scatterframe,text='Y-Axis')
+        yaxis.pack(side=tk.TOP)
+        datay = tk.StringVar()
+        datay.set('')
+        ploty = tk.OptionMenu(scatterframe,datay,*Options)
+        ploty.pack(side=tk.TOP)
+        
+        self.keepplot = tk.BooleanVar()
+        self.keepplot.set(0)
+        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
+        keepplotopt.pack(side=tk.TOP)
+        
+        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
+        plotbutton.pack(side=tk.TOP,pady=(0,5))
+        
+        computeframe = tk.LabelFrame(sideframe, text='Generate')
+        computeframe.pack(side=tk.TOP,fill=tk.X)
+        
+        cmpchoice = tk.StringVar()
+        cmpchoice.set('')
+        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*Options)
+        cmpmenu.pack(side=tk.TOP)
+        
+        avgdif = tk.Frame(computeframe)
+        avgdif.pack(side=tk.TOP)
+        
+        self.imgavg = tk.BooleanVar()#
+        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
+        imgavgopt.grid(row=0,column=0)
+        
+        self.imgdif = tk.BooleanVar()#
+        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
+        imgdifopt.grid(row=0,column=1)
+        
+        self.powerspectra = tk.BooleanVar()#
+        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
+        powerspectraopt.pack(side=tk.TOP)
+        
+        computebutton = tk.Button(computeframe, text='Compute', command=None)
+        computebutton.pack(side=tk.TOP,pady=(0,5))
         
         documentation = tk.Button(sideframe, text='Documentation',command=None)
         documentation.pack(side=tk.TOP,pady=(10,0))
