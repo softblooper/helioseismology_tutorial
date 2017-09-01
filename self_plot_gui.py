@@ -148,6 +148,7 @@ class Helioseismology(tk.Tk):
         
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
         
+        #Scatter plot function
         def plot():
             keep = self.keepplot.get()
             if keep:
@@ -196,7 +197,8 @@ class Helioseismology(tk.Tk):
                 maxrangey.delete(0,tk.END)
             except Exception:
                 self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
-            
+        
+        #Open FITS file as image function
         def viewimg():
             keep = self.keepimg.get()
             if keep:
@@ -282,6 +284,7 @@ class Helioseismology(tk.Tk):
         menu = tk.Frame(container)
         menu.pack(side=tk.TOP, fill=tk.X)
         
+        #Status bar at top right of window. Gives feedback to user.
         self.statusbar = tk.Label(menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='white',width=60,anchor='w')
         self.statusbar.pack(anchor='nw',side=tk.LEFT,pady=(3,3))
         
@@ -291,6 +294,7 @@ class Helioseismology(tk.Tk):
         sideframe = tk.Frame(frame)
         sideframe.pack(side=tk.LEFT,anchor='n')
         
+        #Tools for changing display of image or plot
         toolsframe = tk.LabelFrame(sideframe,text='Plot Tools')
         toolsframe.pack(side=tk.TOP,fill=tk.X)
         
@@ -345,6 +349,7 @@ class Helioseismology(tk.Tk):
         maxrangez = tk.Entry(rangeframez,width = 6)
         maxrangez.grid(row=2,column=1,padx=5,pady=(0,5))
         
+        #Frame for image viewing options
         imgframe = tk.LabelFrame(sideframe, text="Image Plots")
         imgframe.pack(side=tk.TOP,fill=tk.X)
         
@@ -367,6 +372,7 @@ class Helioseismology(tk.Tk):
         imgbutton = tk.Button(imgframe, text='View', command=viewimg)
         imgbutton.pack(side=tk.TOP,pady=(0,5))
         
+        #Frame for scatter plot options
         scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
         scatterframe.pack(side=tk.TOP,fill=tk.X)
         
@@ -392,6 +398,7 @@ class Helioseismology(tk.Tk):
         plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
         plotbutton.pack(side=tk.TOP,pady=(0,5))
         
+        #Frame for computation of various functions to FITS files
         computeframe = tk.LabelFrame(sideframe, text='Generate')
         computeframe.pack(side=tk.TOP,fill=tk.X)
         
@@ -418,6 +425,7 @@ class Helioseismology(tk.Tk):
         computebutton = tk.Button(computeframe, text='Compute', command=None)
         computebutton.pack(side=tk.TOP,pady=(0,5))
         
+        #Button to open tutorial documentation
         documentation = tk.Button(sideframe, text='Documentation',command=None)
         documentation.pack(side=tk.TOP,pady=(10,0))
         
