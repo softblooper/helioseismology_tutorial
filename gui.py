@@ -431,26 +431,6 @@ class Helioseismology(tk.Tk):
             xslice.delete(0,tk.END)
             yslice.delete(0,tk.END)
         
-        def animateplot():
-            ani = None
-            keep = self.keepimg.get()
-            if keep:
-                g = plt.figure(2)
-                g.clear()
-            else:
-                self.f.clear()
-                plt.figure(1)
-            index = DataOpts[slicechoice.get()]
-            minx = minrangex.get()
-            maxx = maxrangex.get()
-            miny = minrangey.get()
-            maxy = maxrangey.get()
-            minz = minrangez.get()
-            maxz = maxrangez.get()
-            slicex = xslice.get()
-            slicey = yslice.get()
-            slicet = tslice.get()
-        
         def imgaverage():
             index = DataOpts[cmpchoice.get()]
             average = (self.data[0] + self.data[2])/2
@@ -462,27 +442,6 @@ class Helioseismology(tk.Tk):
             avg = self.imgavg.get()
             if avg:
                 imgaverage()
-        
-        def process_key(event):
-            fig = self.f #event.canvas.figure
-            ax = fig.axes[0]
-            if event.key == 'j':
-                previous_slice(ax)
-            elif event.key == 'k':
-                next_slice(ax)
-            fig.canvas.draw()
-        
-        def previous_slice(ax):
-            """Go to the previous slice."""
-            volume = ax.volume
-            ax.index = (ax.index - 1) % volume.shape[0]  # wrap around using %
-            ax.images[0].set_array(volume[ax.index])
-        
-        def next_slice(ax):
-            """Go to the next slice."""
-            volume = ax.volume
-            ax.index = (ax.index + 1) % volume.shape[0]
-            ax.images[0].set_array(volume[ax.index])
         
         #This is the main frame. It contains and organizes all other frames in the window.
         container=tk.Frame(self)
