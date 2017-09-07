@@ -463,7 +463,7 @@ class Helioseismology(tk.Tk):
         
         #This frame is the one used to organize plotting tools.
         sideframe = tk.Frame(frame)
-        sideframe.pack(side=tk.LEFT,anchor='n')
+        sideframe.pack(side=tk.RIGHT,anchor='n')
         
         #--Menu Frames--#
         #All the main frames in order, as for ease of re-arrangement.
