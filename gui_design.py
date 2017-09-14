@@ -454,8 +454,8 @@ class Helioseismology(tk.Tk):
         menu.pack(side=tk.TOP, fill=tk.X)
         
         #Status bar at top right of window. Gives feedback to user.
-        self.statusbar = tk.Label(menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='white',width=60,anchor='w')
-        self.statusbar.pack(anchor='nw',side=tk.LEFT,pady=(3,3))
+        self.statusbar = tk.Label(menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='maroon',fg='white',font='Arial 14 bold',width=220,anchor='center')
+        self.statusbar.pack(anchor='center',pady=(3,3))
         
         #This frame is the frame containing the canvas and all plotting tools.
         frame = tk.Frame(container)
@@ -469,11 +469,11 @@ class Helioseismology(tk.Tk):
         #All the main frames in order, as for ease of re-arrangement.
         
         #Tools for changing display of image or plot, such as setting X Y Z limits.
-        toolsframe = tk.LabelFrame(sideframe,text='Plot Tools')
+        toolsframe = tk.LabelFrame(sideframe,text='Plot Tools',fg='white',bg='grey',font='Arial 10 bold')
         toolsframe.pack(side=tk.TOP,fill=tk.X)
         
         #Frame for slice plots
-        sliceframe = tk.LabelFrame(sideframe, text='Slice Plots')
+        sliceframe = tk.LabelFrame(sideframe, text='Slice Plots',fg='white',bg='grey',font='Arial 10 bold')
         sliceframe.pack(side=tk.TOP,fill=tk.X)
         
         #Frame for image viewing options.
@@ -481,17 +481,17 @@ class Helioseismology(tk.Tk):
         #imgframe.pack(side=tk.TOP,fill=tk.X)
         
         #Frame for scatter plot options
-        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
+        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots",fg='white',bg='grey',font='Arial 10 bold')
         scatterframe.pack(side=tk.TOP,fill=tk.X)
         
         #Frame for computation of various functions to FITS files.
-        computeframe = tk.LabelFrame(sideframe, text='Generate')
+        computeframe = tk.LabelFrame(sideframe, text='Generate',fg='white',bg='grey',font='Arial 10 bold')
         computeframe.pack(side=tk.TOP,fill=tk.X)
         
         #--Tools Frame Widgets--#
         
         #This label simply marks X as to identify its corresponding entry boxes
-        xtools = tk.Label(toolsframe,text='X')
+        xtools = tk.Label(toolsframe,text='X',fg='white',bg='grey',font='Arial 10 bold')
         xtools.pack(side=tk.TOP)
         
         #Small frame to neatly organize min and max entry boxes and labels
@@ -499,29 +499,29 @@ class Helioseismology(tk.Tk):
         rangeframex.pack(side=tk.TOP)
         
         #Labels for 'Min' and 'Max'
-        minlabelx = tk.Label(rangeframex,text = 'Min')
+        minlabelx = tk.Label(rangeframex,text = 'Min',fg='white',bg='grey',font='Arial 10 bold')
         minlabelx.grid(row=0,column=0)
-        maxlabelx = tk.Label(rangeframex, text = 'Max')
+        maxlabelx = tk.Label(rangeframex, text = 'Max',fg='white',bg='grey',font='Arial 10 bold')
         maxlabelx.grid(row=0,column=1)
         
         #Entry box for X Minimum
-        minrangex = tk.Entry(rangeframex,width = 6)
+        minrangex = tk.Entry(rangeframex,width = 6,bg='white')
         minrangex.grid(row=1,column=0,padx=5)
         
         #Entry box for X Maximum
-        maxrangex = tk.Entry(rangeframex,width = 6)
+        maxrangex = tk.Entry(rangeframex,width = 6,bg='white')
         maxrangex.grid(row=1,column=1,padx=5)
         
         #Previous descriptions repeat accordingtly to Y and Z as well
-        ytools = tk.Label(toolsframe,text='Y')
+        ytools = tk.Label(toolsframe,text='Y',fg='white',bg='grey',font='Arial 10 bold')
         ytools.pack(side=tk.TOP)
         
         rangeframey = tk.Frame(toolsframe)
         rangeframey.pack(side=tk.TOP)
         
-        minlabely = tk.Label(rangeframey,text = 'Min')
+        minlabely = tk.Label(rangeframey,text = 'Min',fg='white',bg='grey',font='Arial 10 bold')
         minlabely.grid(row=0,column=0)
-        maxlabely = tk.Label(rangeframey, text = 'Max')
+        maxlabely = tk.Label(rangeframey, text = 'Max',fg='white',bg='grey',font='Arial 10 bold')
         maxlabely.grid(row=0,column=1)
         
         minrangey = tk.Entry(rangeframey,width = 6)
@@ -530,15 +530,15 @@ class Helioseismology(tk.Tk):
         maxrangey = tk.Entry(rangeframey,width = 6)
         maxrangey.grid(row=1,column=1,padx=5)
         
-        ztools = tk.Label(toolsframe,text='Z')
+        ztools = tk.Label(toolsframe,text='Z',fg='white',bg='grey',font='Arial 10 bold')
         ztools.pack(side=tk.TOP)
         
         rangeframez = tk.Frame(toolsframe)
         rangeframez.pack(side=tk.TOP)
         
-        minlabelz = tk.Label(rangeframez,text = 'Min')
+        minlabelz = tk.Label(rangeframez,text = 'Min',fg='white',bg='grey',font='Arial 10 bold')
         minlabelz.grid(row=0,column=0)
-        maxlabelz = tk.Label(rangeframez, text = 'Max')
+        maxlabelz = tk.Label(rangeframez, text = 'Max',fg='white',bg='grey',font='Arial 10 bold')
         maxlabelz.grid(row=0,column=1)
         
         minrangez = tk.Entry(rangeframez,width = 6)
@@ -571,29 +571,31 @@ class Helioseismology(tk.Tk):
         #--Scatter Plot Frame--#
         
         #Choose data set to be used for the x-axis
-        xaxis = tk.Label(scatterframe,text='X-Axis')
+        xaxis = tk.Label(scatterframe,text='X-Axis',fg='white',bg='grey',font='Arial 10 bold')
         xaxis.pack(side=tk.TOP)
         datax = tk.StringVar()
         datax.set('')
         plotx = tk.OptionMenu(scatterframe,datax,*Options)
+        plotx.config(bg='white')
         plotx.pack(side=tk.TOP)
         
         #Choose data set to be used for the y-axis
-        yaxis = tk.Label(scatterframe,text='Y-Axis')
+        yaxis = tk.Label(scatterframe,text='Y-Axis',fg='white',bg='grey',font='Arial 10 bold')
         yaxis.pack(side=tk.TOP)
         datay = tk.StringVar()
         datay.set('')
         ploty = tk.OptionMenu(scatterframe,datay,*Options)
+        ploty.config(bg='white')
         ploty.pack(side=tk.TOP)
         
         #Checkbox that allows user to open the desired image in a new window.
         self.keepplot = tk.BooleanVar()
         self.keepplot.set(0)
-        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
+        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",fg='white',bg='grey',font='Arial 10 bold',variable=self.keepplot) #Implement feature
         keepplotopt.pack(side=tk.TOP)
         
         #Button that allows user to plot both data sets in a scatter plat on the canvas.
-        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
+        plotbutton = tk.Button(scatterframe, text='Plot',fg='white',bg='grey',font='Arial 10 bold', command=plot)
         plotbutton.pack(side=tk.TOP,pady=(0,5))
         
         #--Computation Frame Widgets--#
@@ -602,6 +604,7 @@ class Helioseismology(tk.Tk):
         cmpchoice = tk.StringVar()
         cmpchoice.set('')
         cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*Options)
+        cmpmenu.config(bg='white')
         cmpmenu.pack(side=tk.TOP)
         
         #These checkbuttons will most likely change to buttons, so temporary.
@@ -612,21 +615,21 @@ class Helioseismology(tk.Tk):
         
         #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
         self.imgavg = tk.BooleanVar()#
-        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
+        imgavgopt = tk.Checkbutton(avgdif,text='Average',fg='white',bg='grey',font='Arial 10 bold',variable=self.imgavg,command=None)
         imgavgopt.grid(row=0,column=0)
         
         #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
         self.imgdif = tk.BooleanVar()#
-        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
+        imgdifopt = tk.Checkbutton(avgdif,text='Difference',fg='white',bg='grey',font='Arial 10 bold',variable=self.imgdif,command=None)
         imgdifopt.grid(row=0,column=1)
         
         #Checkbutton that allows the user to generate a power spectra of a data set.
         self.powerspectra = tk.BooleanVar()#
-        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
+        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',fg='white',bg='grey',font='Arial 10 bold',variable=self.powerspectra,command = None)
         powerspectraopt.pack(side=tk.TOP)
         
         #Button that allows the user to compute the selected computations.
-        computebutton = tk.Button(computeframe, text='Compute', command=None)
+        computebutton = tk.Button(computeframe, text='Compute',fg='white',bg='grey',font='Arial 10 bold', command=None)
         computebutton.pack(side=tk.TOP,pady=(0,5))
         
         #--Slice Frame Widgets--#
@@ -634,18 +637,19 @@ class Helioseismology(tk.Tk):
         slicechoice = tk.StringVar()
         slicechoice.set('')
         slicemenu = tk.OptionMenu(sliceframe,slicechoice,*Options)
+        slicemenu.config(bg='white')
         slicemenu.pack(side=tk.TOP)
         
         sliceentries = tk.Frame(sliceframe)
         sliceentries.pack(side=tk.TOP)
         
-        xslicelabel = tk.Label(sliceentries,text='X')
+        xslicelabel = tk.Label(sliceentries,text='X',fg='white',bg='grey',font='Arial 10 bold')
         xslicelabel.grid(row=0,column=0,padx=5)
         
-        yslicelabel = tk.Label(sliceentries,text='Y')
+        yslicelabel = tk.Label(sliceentries,text='Y',fg='white',bg='grey',font='Arial 10 bold')
         yslicelabel.grid(row=0,column=1,padx=5)
         
-        tslicelabel = tk.Label(sliceentries,text='t')
+        tslicelabel = tk.Label(sliceentries,text='t',fg='white',bg='grey',font='Arial 10 bold')
         tslicelabel.grid(row=0,column=2,padx=5)
         
         xslice = tk.Entry(sliceentries,width = 3)
@@ -659,18 +663,18 @@ class Helioseismology(tk.Tk):
         
         #Checkbox that allows user to open the desired image in a new window.
         self.keepimg = tk.BooleanVar()
-        keepimgopt = tk.Checkbutton(sliceframe, text = "Open in new window",variable=self.keepimg)
+        keepimgopt = tk.Checkbutton(sliceframe, text = "Open in new window",fg='white',bg='grey',font='Arial 10 bold',variable=self.keepimg)
         keepimgopt.pack(side=tk.TOP)
         
         self.animate = tk.BooleanVar()
-        animateoption = tk.Checkbutton(sliceframe, text='Animate',variable=self.animate)
+        animateoption = tk.Checkbutton(sliceframe, text='Animate',fg='white',bg='grey',font='Arial 10 bold',variable=self.animate)
         animateoption.pack(side=tk.TOP,pady=(0,5))
         
-        slicebutton = tk.Button(sliceframe, text='Plot',command=viewslice)
+        slicebutton = tk.Button(sliceframe, text='Plot',fg='white',bg='grey',font='Arial 10 bold',command=viewslice)
         slicebutton.pack(side=tk.TOP,pady=(0,5))
         
         #Button to open tutorial documentation
-        documentation = tk.Button(sideframe, text='Documentation',command=None)
+        documentation = tk.Button(sideframe, text='Documentation',fg='white',bg='grey',font='Arial 10 bold',command=None)
         documentation.pack(side=tk.TOP,pady=(10,0))
         
         #plot1.bind('<ButtonRelease-1>', tutorialSelect1)
