@@ -16,6 +16,7 @@ plt.style.use(astropy_mpl_style)
 
 import numpy as np
 from scipy import ndimage
+from pylab import find
 
 #------------------------------------------------------------------------------#
 #--Tutorial-Required Classes
@@ -31,7 +32,10 @@ class FitsImage(object): #Allows creating of plots with data from fits files
         self.shortname = shortname
         self.dimensions = dimensions
         
-        self.imgdata = fits.getdata(self.file)
+        try:
+            self.imgdata = fits.getdata(self.file)
+        except:
+            self.imgdata = self.file
         
         self.shape = np.shape(self.imgdata)
         self.dim = len(self.shape)
@@ -63,44 +67,33 @@ class FitsImage(object): #Allows creating of plots with data from fits files
             plt.xticks([])
             plt.yticks([])
             plt.grid(False)
-
-class Average(object): #Finds the average between two data sets and plots it.
     
-    def __init__(self,data,title,colorscale,colorlabel):
-        self.data = data
-        self.title = title
-        self.color = colorscale
-        self.colorlabel = colorlabel
-        
-    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title)
-        plt.imshow((self.data[0] + self.data[2])/2, cmap = self.color)
-        plt.title(self.title)
-        ibar1 = plt.colorbar()
-        plt.gca().invert_yaxis()
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
-
-class Difference(object): #Finds the difference between two data sets and plots it.
+class PowerSpectra(object):
     
-    def __init__(self,data,title,colorscale,colorlabel):
-        self.data = data
+    def __init__(self,data1,data2,data3,title,ratio_x,ratio_y):
+        self.data1 = data1
+        self.data2 = data2
+        self.data3 = data3
         self.title = title
-        self.color = colorscale
-        self.colorlabel = colorlabel
+        self.dim = 1
+        self.xticksmin = np.arange(0, 64, 8)
+        self.xticksmax = np.round(np.arange(0, 64, 8)*ratio_x)
+        self.yticksmin = np.arange(0, 256, 25)
+        self.yticksmax = np.round(np.arange(0, 256, 25)*ratio_y)
+
+class FitsFiles(object):
+
+    def __init__(self):
         
-    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title)
-        plt.imshow((self.data[0] - self.data[2]), cmap = self.color)
-        plt.title(self.title)
-        ibar1 = plt.colorbar()
-        plt.gca().invert_yaxis()
-        plt.xticks([])
-        plt.yticks([])
-        plt.grid(False)
+        self.files = []
+        self.options = []
+        self.dataopts = {}
+    
+    def add(self, fitsimage):
+        
+        self.files.append(fitsimage)
+        self.options.append(fitsimage.title)
+        self.dataopts[fitsimage.title] = len(self.files) - 1
 
 #------------------------------------------------------------------------------#
 #--Tutorials--
@@ -110,13 +103,20 @@ Dopplergram = FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)',
 Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)','data1','(128x128x512)')
 Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2','(128x128x512)')
 
-Data = (Intensity, Magnetogram, Dopplergram, Data1, Data2) #D1vD2, Average1, Difference1,Average2,Difference2)
-Options = ('Intensity', 'Magnetogram', 'Dopplergram', 'Data 1', 'Data 2')
-DataIndex = (0, 1, 2, 3, 4)
+Data = [Intensity, Magnetogram, Dopplergram, Data1, Data2] #D1vD2, Average1, Difference1,Average2,Difference2)
+
+DATA = FitsFiles()
+
+DATA.add(Intensity)
+DATA.add(Magnetogram)
+DATA.add(Dopplergram)
+DATA.add(Data1)
+DATA.add(Data2)
+
+Options = ['Intensity', 'Magnetogram', 'Dopplergram', 'Data 1', 'Data 2']
+DataIndex = [0, 1, 2, 3, 4]
 
 DataOpts = dict(zip(Options,DataIndex))
-
-ani = None
 
 #------------------------------------------------------------------------------#
 #--GUI--
@@ -149,8 +149,8 @@ class Helioseismology(tk.Tk):
             else:
                 self.f.clear()
                 plt.figure(1)
-            index1 = DataOpts[datax.get()]
-            index2 = DataOpts[datay.get()]
+            index1 = DATA.dataopts[datax.get()]
+            index2 = DATA.dataopts[datay.get()]
             minx = minrangex.get()
             maxx = maxrangex.get()
             miny = minrangey.get()
@@ -194,83 +194,15 @@ class Helioseismology(tk.Tk):
             except Exception:
                 self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
         
-        #Open FITS file as image function
-        def viewimg():
-            ani = None
-            keep = self.keepimg.get()
-            
-            if keep:
-                g = plt.figure(2)
-                g.clear()
-            else:
-                self.f.clear()
-                plt.figure(1)
-            index = DataOpts[imgchoice.get()]
-            minx = minrangex.get()
-            maxx = maxrangex.get()
-            miny = minrangey.get()
-            maxy = maxrangey.get()
-            minz = minrangez.get()
-            maxz = maxrangez.get()
-            
-            if (minz and maxz):
-                minz = int(minz)
-                maxz = int(maxz)
-            else:
-                minz = None
-                maxz = None
-            
-            if Data[index].dim == 3:
-                plt.imshow(Data[index].imgdata[0], cmap = Data[index].color, vmin=minz, vmax=maxz)
-            else:
-                    plt.imshow(Data[index].imgdata, cmap = Data[index].color, vmin=minz, vmax=maxz)
-            if (minx and maxx):
-                minx = int(minx)
-                maxx = int(maxx)
-                plt.xlim(minx,maxx)
-            if (miny and maxy):
-                miny = int(miny)
-                maxy = int(maxy)
-                plt.ylim(maxy,miny)
-            ibar = plt.colorbar()
-            ibar.set_label(Data[index].colorlabel)
-            plt.gca().invert_yaxis()
-            #plt.xticks([])
-            #plt.yticks([])
-            plt.xlabel('pix')
-            plt.ylabel('pix')
-            #plt.grid(False)
-            if keep:
-                kept = tk.Toplevel()
-                
-                keptcanvas = FigureCanvasTkAgg(g, kept)
-                keptcanvas.show()
-                keptcanvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
-                
-                kepttoolbar = NavigationToolbar2TkAgg(keptcanvas, kept)
-                kepttoolbar.update()
-                keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-            else:
-                self.f.canvas.draw()
-            self.statusbar.config(text="Showing image of "+Data[index].title)
-            minrangex.delete(0,tk.END)
-            maxrangex.delete(0,tk.END)
-            minrangey.delete(0,tk.END)
-            maxrangey.delete(0,tk.END)
-            minrangez.delete(0,tk.END)
-            maxrangez.delete(0,tk.END)
-        
         def viewslice():
-            ani = None
             keep = self.keepimg.get()
-            animate = self.animate.get()
             if keep:
                 g = plt.figure(2)
                 g.clear()
             else:
                 self.f.clear()
                 plt.figure(1)
-            index = DataOpts[slicechoice.get()]
+            index = DATA.dataopts[self.slicechoice.get()]
             minx = minrangex.get()
             maxx = maxrangex.get()
             miny = minrangey.get()
@@ -280,6 +212,8 @@ class Helioseismology(tk.Tk):
             slicex = xslice.get()
             slicey = yslice.get()
             slicet = tslice.get()
+            
+            image = DATA.files[index]
             
             labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
             labelindx = None
@@ -292,54 +226,54 @@ class Helioseismology(tk.Tk):
                 minz = None
                 maxz = None
             
-            if Data[index].dim == 3:
-                sizet = np.arange(Data[index].shape[0])
-                sizey = np.arange(Data[index].shape[1])
-                sizex = np.arange(Data[index].shape[2])
+            if image.dim == 3:
+                sizet = np.arange(image.shape[0])
+                sizey = np.arange(image.shape[1])
+                sizex = np.arange(image.shape[2])
                 if slicex:
                     slicex = int(slicex)
                     if slicey:
                         slicey = int(slicey)
                         labelindx = 1
                         slicetext = 'x = '+xslice.get()+' and y = '+yslice.get()
-                        data = Data[index].imgdata[:,slicey,slicex]
+                        data = image.imgdata[:,slicey,slicex]
                         plt.plot(sizet,data,lw=0.5,color='black')
                     elif slicet:
                         slicet = int(slicet)
                         labelindx = 3
                         slicetext = 't = '+tslice.get()+' and x = '+xslice.get()
-                        data = Data[index].imgdata[slicet,:,slicex]
+                        data = image.imgdata[slicet,:,slicex]
                         plt.plot(sizey,data,lw=0.5,color='black')
                     else:
                         labelindx = 1
                         labelindy = 3
                         slicetext = 'x = '+xslice.get()
-                        data = ndimage.rotate(Data[index].imgdata[:,:,slicex], 270)
-                        plt.imshow(data, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                        data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
+                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                 elif slicey:
                     slicey = int(slicey)
                     if slicet:
                         slicet = int(slicet)
                         labelindx = 2
                         slicetext = 't = '+tslice.get()+' and y = '+yslice.get()
-                        data = Data[index].imgdata[slicet,slicey,:]
+                        data = image.imgdata[slicet,slicey,:]
                         plt.plot(sizex,data,lw=0.5,color='black')
                     else:
                         labelindx = 2
                         labelindy = 1
                         slicetext = 'y = '+yslice.get()
-                        data = Data[index].imgdata[:,slicey,:]
-                        plt.imshow(data, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                        data = image.imgdata[:,slicey,:]
+                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                 elif slicet:
                     slicet = int(slicet)
                     labelindx = 2
                     labelindy = 3
                     slicetext = 't = '+tslice.get()
-                    data = Data[index].imgdata[slicet,...]
-                    plt.imshow(data, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                    data = image.imgdata[slicet,...]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                 else:
-                    data = Data[index].imgdata[0]
-                    plt.imshow(data, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                    data = image.imgdata[0]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                     labelindx = 2
                     labelindy = 3
                     slicetext = 't = 0'
@@ -349,48 +283,46 @@ class Helioseismology(tk.Tk):
                     plt.ylabel(labels[0])
                     plt.xlabel(labels[labelindx])
                 else:
-                    plt.title('Slice of '+Data[index].title+' at '+slicetext)
+                    plt.title('Slice of '+image.title+' at '+slicetext)
                     plt.xlabel(labels[labelindx])
                     plt.ylabel(labels[labelindy])
                     ibar = plt.colorbar()
-                    ibar.set_label(Data[index].colorlabel)
+                    ibar.set_label(image.colorlabel)
             
-            else: #I think these slice backwards
-                sizey = np.arange(Data[index].shape[0])
-                sizex = np.arange(Data[index].shape[1])
+            elif image.dim == 2:
+                sizey = np.arange(image.shape[0])
+                sizex = np.arange(image.shape[1])
                 if slicex:
                     slicex=int(slicex)
-                    plt.plot(sizey,Data[index].imgdata[:,slicex],lw=0.5,color='black')
+                    plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
                     labelindx = 3
                     slicetext = 'x ='+xslice.get()
                 elif slicey:
                     slicey=int(slicey)
-                    plt.plot(sizex,Data[index].imgdata[slicey,:],lw=0.5,color='black')
+                    plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
                     labelindx = 2
                     slicetext = 'y ='+yslice.get()
                 else:
-                    plt.imshow(Data[index].imgdata, cmap = Data[index].color, vmin=minz, vmax=maxz)
+                    plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
                     labelindx = 2
                     labelindy = 3
                 if (slicex or slicey):
-                    plt.title(Data[index].colorlabel+' at '+slicetext)
-                    plt.ylabel(Data[index].colorlabel)
+                    plt.title(image.colorlabel+' at '+slicetext)
+                    plt.ylabel(image.colorlabel)
                     plt.xlabel(labels[labelindx])
                 else:
-                    plt.title(Data[index].title)
+                    plt.title(image.title)
                     plt.xlabel(labels[labelindx])
                     plt.ylabel(labels[labelindy])
                     ibar = plt.colorbar()
-                    ibar.set_label(Data[index].colorlabel)
+                    ibar.set_label(image.colorlabel)
             
-            '''if animate:
-                if Data[index].dim == 3:
-                    ims = []
-                    for i in range(Data[index].shape[0]):
-                        im = plt.imshow(Data[index].imgdata[i], cmap = Data[index].color, vmin=minz, vmax=maxz)
-                        ims.append([im])
-                    plt.title(Data[index].title)
-                    ani = animation.ArtistAnimation(self.f, ims, interval=100, blit=True, repeat_delay=1000)'''
+            else:
+                plt.xlabel('wavenumber l')
+                plt.ylabel('frequency (mHz)')
+                plt.xticks(image.xticksmin, image.xticksmax)
+                plt.yticks(image.yticksmin, image.yticksmax)
+                plt.contourf(image.data1, image.data2, image.data3, 100)
         
             if (minx and maxx):
                 minx = int(minx)
@@ -404,7 +336,10 @@ class Helioseismology(tk.Tk):
             if keep:
                 kept = tk.Toplevel()
                 
-                text="Showing: "+Data[index].title+'. Size: '+Data[index].dimensions
+                if image.dim == 1:
+                    text = 'Showing: '
+                else:
+                    text="Showing: "+image.title+'. Size: '+image.dimensions
                 self.statusbar = tk.Label(kept,text=text,relief=tk.SUNKEN,bg='white',width=60,anchor='w')
                 self.statusbar.pack(anchor='nw',side=tk.TOP,pady=(3,3))
                 
@@ -417,9 +352,10 @@ class Helioseismology(tk.Tk):
                 keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
             else:
                 self.f.canvas.draw()
-                self.statusbar.config(text="Showing: "+Data[index].title+'. Size: '+Data[index].dimensions)
-            
-            self.f.canvas.mpl_connect('key_press_event', process_key)
+                if image.dim == 1:
+                    self.statusbar.config(text = 'Showing: ' + image.title)
+                else:
+                    self.statusbar.config(text="Showing: "+image.title+'. Size: '+image.dimensions)
             
             minrangex.delete(0,tk.END)
             maxrangex.delete(0,tk.END)
@@ -431,17 +367,126 @@ class Helioseismology(tk.Tk):
             xslice.delete(0,tk.END)
             yslice.delete(0,tk.END)
         
-        def imgaverage():
-            index = DataOpts[cmpchoice.get()]
-            average = (self.data[0] + self.data[2])/2
-            hdu = fits.PrimaryHDU(average)
-            name = 'avg_' + self.shortname
-            hdu.writeto(name)
+        '''def animate(): #FIX
+            h = plt.figure(3)
+            index = DATA.dataopts[self.slicechoice.get()]
+            minz = minrangez.get()
+            maxz = maxrangez.get()
+            if DATA.files[index].dim == 3:
+                ims = []
+                for i in range(DATA.files[index].shape[0]):
+                    im = plt.imshow(DATA.files[index].imgdata[i], cmap = DATA.files[index].color, vmin=minz, vmax=maxz)
+                    ims.append([im])
+                plt.title(DATA.files[index].title)
+                
+                Ani = animation.ArtistAnimation(h, ims, interval=100, blit=True,
+                    repeat_delay=1000)
+                
+                aniwin = tk.Toplevel()
+                anicanvas = FigureCanvasTkAgg(h,aniwin)
+                anicanvas.show()
+                anicanvas.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=True)
+                
+                anitoolbar = NavigationToolbar2TkAgg(anicanvas, aniwin)
+                anitoolbar.update()
+                anicanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)'''
+        
+        def imgaverage(): #IT LIVES!!!
+            index = DATA.dataopts[cmpchoice.get()]
+            average = (DATA.files[index].imgdata[0] + DATA.files[index].imgdata[2])/2
+            title = DATA.files[index].title + ' Average'
+            color = DATA.files[index].color
+            colorlabel = DATA.files[index].colorlabel
+            shortname = 'avg'+DATA.files[index].shortname
+            dimensions = DATA.files[index].dimensions
+            DATA.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
+            #updatemenu()
+        
+        def imgdifference():
+            index = DATA.dataopts[cmpchoice.get()]
+            difference = DATA.files[index].imgdata[2] - DATA.files[index].imgdata[1]
+            title = DATA.files[index].title + ' Difference'
+            color = DATA.files[index].color
+            colorlabel = DATA.files[index].colorlabel
+            shortname = 'dif'+DATA.files[index].shortname
+            dimensions = DATA.files[index].dimensions
+            DATA.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
+            #updatemenu()
+        
+        def powerspectra():
+            index = DATA.dataopts[cmpchoice.get()]
             
+            ofrq1 = np.fft.fftn(DATA.files[index].imgdata)
+            frq1 = np.fft.fftshift(ofrq1)
+            power = np.log(np.abs(frq1**2))
+            
+            begin_time = 0
+            begin_space = 0
+            end_time = power.shape[0]
+            end_space = power.shape[1]
+            cen_time = power.shape[0]/2
+            cen_space = power.shape[1]/2
+            
+            x = np.linspace(-cen_space, cen_space-1, end_space)
+            y = np.linspace(-cen_space, cen_space-1, end_space)
+            X,Y = np.meshgrid(x,y)
+            dist = np.hypot(X,Y)
+            
+            cen_time = int(cen_time)
+            cen_space = int(cen_space)
+            a = np.zeros([cen_time, cen_space])
+            w = 0.5
+            
+            for i in range(cen_time, end_time):
+                pp = power[i,...]
+                for r in range(begin_space, cen_space):
+                    inds = find(np.logical_and(dist > r-w, dist < r+w))
+                    flatpower = pp.flatten()
+                    avg = np.mean(flatpower[inds])
+                    a[i-cen_time, r] = a[i-cen_time, r] +avg
+            
+            m = np.linspace(1, cen_space, cen_space)
+            n = np.linspace(1, cen_time, cen_time)
+            M, N = np.meshgrid(m, n)
+            A = a
+            
+            dx = 1.39 # length per pixel in Mm
+            pix = 128 # number of pixels
+            kx = ky = np.pi/dx
+            r_sun = 696 # radius of the sun in Mm
+            l = kx * r_sun # wavenumber in unit of degree
+            ratio_x = l/(pix/2)
+            
+            dt = 60 # in sec
+            omega = np.pi/dt # temporal frquency
+            v = omega/(2*np.pi) # cyclic frequency
+            frq = v*1000 # in unit of mHz
+            ratio_y = frq/256
+            
+            title = DATA.files[index].title + ' Power Spectra'
+            
+            DATA.add(PowerSpectra(M,N,A,title,ratio_x,ratio_y))
+            #updatemenu()
+        
+        def updatemenu():
+            m = self.slicemenu.children['menu']
+            m.delete(0, "end")
+            for i in range(len(DATA.files)):
+                m.add_command(label=DATA.options[i], command=lambda value=DATA.options[i]: self.slicechoice.set(value))
+        
         def compute():
             avg = self.imgavg.get()
+            dif = self.imgdif.get()
+            ps = self.ps.get()
+            
             if avg:
                 imgaverage()
+            if dif:
+                imgdifference()
+            if ps:
+                powerspectra()
+            
+            updatemenu()
         
         #This is the main frame. It contains and organizes all other frames in the window.
         container=tk.Frame(self)
@@ -475,10 +520,6 @@ class Helioseismology(tk.Tk):
         #Frame for slice plots
         sliceframe = tk.LabelFrame(sideframe, text='Slice Plots')
         sliceframe.pack(side=tk.TOP,fill=tk.X)
-        
-        #Frame for image viewing options.
-        #imgframe = tk.LabelFrame(sideframe, text="Image Plots")
-        #imgframe.pack(side=tk.TOP,fill=tk.X)
         
         #Frame for scatter plot options
         scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
@@ -547,94 +588,12 @@ class Helioseismology(tk.Tk):
         maxrangez = tk.Entry(rangeframez,width = 6)
         maxrangez.grid(row=2,column=1,padx=5,pady=(0,5))
         
-        '''#--Image Frame Widgets--#
-        
-        #Label to indicate the purpose of the following option menu.
-        imgtext = tk.Label(imgframe,text='Image')
-        imgtext.pack(side=tk.TOP)
-        
-        #Option menu to choose which image the user wants to view.
-        imgchoice = tk.StringVar()
-        imgchoice.set('')
-        imgmenu = tk.OptionMenu(imgframe,imgchoice,*Options)
-        imgmenu.pack(side=tk.TOP)
-        
-        #Checkbox that gives user option to animate the image. (Tempoarary, will be removed).
-        self.imgani = tk.BooleanVar()#
-        imganiopt = tk.Checkbutton(imgframe, text = 'Animate',variable=self.imgani,command=None)
-        imganiopt.pack(side=tk.TOP)
-        
-        #Button that allows user to view selected image in the canvas.
-        imgbutton = tk.Button(imgframe, text='View', command=viewimg)
-        imgbutton.pack(side=tk.TOP,pady=(0,5))'''
-        
-        #--Scatter Plot Frame--#
-        
-        #Choose data set to be used for the x-axis
-        xaxis = tk.Label(scatterframe,text='X-Axis')
-        xaxis.pack(side=tk.TOP)
-        datax = tk.StringVar()
-        datax.set('')
-        plotx = tk.OptionMenu(scatterframe,datax,*Options)
-        plotx.pack(side=tk.TOP)
-        
-        #Choose data set to be used for the y-axis
-        yaxis = tk.Label(scatterframe,text='Y-Axis')
-        yaxis.pack(side=tk.TOP)
-        datay = tk.StringVar()
-        datay.set('')
-        ploty = tk.OptionMenu(scatterframe,datay,*Options)
-        ploty.pack(side=tk.TOP)
-        
-        #Checkbox that allows user to open the desired image in a new window.
-        self.keepplot = tk.BooleanVar()
-        self.keepplot.set(0)
-        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
-        keepplotopt.pack(side=tk.TOP)
-        
-        #Button that allows user to plot both data sets in a scatter plat on the canvas.
-        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
-        plotbutton.pack(side=tk.TOP,pady=(0,5))
-        
-        #--Computation Frame Widgets--#
-        
-        #Option menu that allows user to choose data set to apply some sort of calculation.
-        cmpchoice = tk.StringVar()
-        cmpchoice.set('')
-        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*Options)
-        cmpmenu.pack(side=tk.TOP)
-        
-        #These checkbuttons will most likely change to buttons, so temporary.
-        
-        #Frame to organize checkbuttons for Average and Difference computations.
-        avgdif = tk.Frame(computeframe)
-        avgdif.pack(side=tk.TOP)
-        
-        #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
-        self.imgavg = tk.BooleanVar()#
-        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg,command=None)
-        imgavgopt.grid(row=0,column=0)
-        
-        #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
-        self.imgdif = tk.BooleanVar()#
-        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif,command=None)
-        imgdifopt.grid(row=0,column=1)
-        
-        #Checkbutton that allows the user to generate a power spectra of a data set.
-        self.powerspectra = tk.BooleanVar()#
-        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.powerspectra,command = None)
-        powerspectraopt.pack(side=tk.TOP)
-        
-        #Button that allows the user to compute the selected computations.
-        computebutton = tk.Button(computeframe, text='Compute', command=None)
-        computebutton.pack(side=tk.TOP,pady=(0,5))
-        
         #--Slice Frame Widgets--#
         
-        slicechoice = tk.StringVar()
-        slicechoice.set('')
-        slicemenu = tk.OptionMenu(sliceframe,slicechoice,*Options)
-        slicemenu.pack(side=tk.TOP)
+        self.slicechoice = tk.StringVar()
+        self.slicechoice.set('')
+        self.slicemenu = tk.OptionMenu(sliceframe,self.slicechoice,*DATA.options)
+        self.slicemenu.pack(side=tk.TOP)
         
         sliceentries = tk.Frame(sliceframe)
         sliceentries.pack(side=tk.TOP)
@@ -662,12 +621,76 @@ class Helioseismology(tk.Tk):
         keepimgopt = tk.Checkbutton(sliceframe, text = "Open in new window",variable=self.keepimg)
         keepimgopt.pack(side=tk.TOP)
         
-        self.animate = tk.BooleanVar()
-        animateoption = tk.Checkbutton(sliceframe, text='Animate',variable=self.animate)
+        #self.animate = tk.BooleanVar()
+        animateoption = tk.Button(sliceframe, text='Animate',command=animate)
         animateoption.pack(side=tk.TOP,pady=(0,5))
         
         slicebutton = tk.Button(sliceframe, text='Plot',command=viewslice)
         slicebutton.pack(side=tk.TOP,pady=(0,5))
+        
+        #--Scatter Plot Frame--#
+        
+        #Choose data set to be used for the x-axis
+        xaxis = tk.Label(scatterframe,text='X-Axis')
+        xaxis.pack(side=tk.TOP)
+        datax = tk.StringVar()
+        datax.set('')
+        plotx = tk.OptionMenu(scatterframe,datax,*DATA.options)
+        plotx.pack(side=tk.TOP)
+        
+        #Choose data set to be used for the y-axis
+        yaxis = tk.Label(scatterframe,text='Y-Axis')
+        yaxis.pack(side=tk.TOP)
+        datay = tk.StringVar()
+        datay.set('')
+        ploty = tk.OptionMenu(scatterframe,datay,*DATA.options)
+        ploty.pack(side=tk.TOP)
+        
+        #Checkbox that allows user to open the desired image in a new window.
+        self.keepplot = tk.BooleanVar()
+        self.keepplot.set(0)
+        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
+        keepplotopt.pack(side=tk.TOP)
+        
+        #Button that allows user to plot both data sets in a scatter plat on the canvas.
+        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
+        plotbutton.pack(side=tk.TOP,pady=(0,5))
+        
+        #--Computation Frame Widgets--#
+        
+        #Option menu that allows user to choose data set to apply some sort of calculation.
+        cmpchoice = tk.StringVar()
+        cmpchoice.set('')
+        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*DATA.options)
+        cmpmenu.pack(side=tk.TOP)
+        
+        #These checkbuttons will most likely change to buttons, so temporary.
+        
+        #Frame to organize checkbuttons for Average and Difference computations.
+        avgdif = tk.Frame(computeframe)
+        avgdif.pack(side=tk.TOP)
+        
+        #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
+        self.imgavg = tk.BooleanVar()
+        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg)
+        #imgavgopt = tk.Button(avgdif, text = 'Average', command=imgaverage)
+        imgavgopt.grid(row=0,column=0)
+        
+        #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
+        self.imgdif = tk.BooleanVar()#
+        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif)
+        #imgdifopt = tk.Button(avgdif, text = 'Difference', command=imgdifference)
+        imgdifopt.grid(row=0,column=1)
+        
+        #Checkbutton that allows the user to generate a power spectra of a data set.
+        self.ps = tk.BooleanVar()#
+        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.ps)
+        #powerspectraopt = tk.Button(computeframe, text='Power Spectra', command=powerspectra)
+        powerspectraopt.pack(side=tk.TOP)
+        
+        #Button that allows the user to compute the selected computations.
+        computebutton = tk.Button(computeframe, text='Compute', command=compute)
+        computebutton.pack(side=tk.TOP,pady=(0,5))
         
         #Button to open tutorial documentation
         documentation = tk.Button(sideframe, text='Documentation',command=None)
