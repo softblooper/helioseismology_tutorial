@@ -18,8 +18,17 @@ import numpy as np
 from scipy import ndimage
 from pylab import find
 
+'''Notes to self:
+-Add Computation Menu and Computations
+-Make pretty (add padding again!)
+-Fix that damn hidden exception in the plot function
+-Check w/e else
+'''
+
+
 #------------------------------------------------------------------------------#
-#--Tutorial-Required Classes
+
+#---Classes---#
 
 class FitsImage(object): #Allows creating of plots with data from fits files
     
@@ -39,35 +48,7 @@ class FitsImage(object): #Allows creating of plots with data from fits files
         
         self.shape = np.shape(self.imgdata)
         self.dim = len(self.shape)
-    
-    #Animation Method: Allows animation of image throughout time. NOTE: Must state variable when used, eg: a = Example.animateplot(...).
-    def animateplot(self,numofslices,rowdim,coldim,row,col,rowspan,colspan): #Fix animations. Not working?
-        plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-        plt.title(self.title)
-        plt.gca().invert_yaxis()
-        plt.xticks([])
-        plt.yticks([])
-        ims = []
-        for i in range(numofslices):
-            im = plt.imshow(self.imgdata[i], cmap = self.color)
-            ims.append([im])
-        return ims
-    
-    def plot(self,rowdim,coldim,row,col,rowspan,colspan):
-            #plt.subplot2grid((rowdim, coldim), (row, col), rowspan = rowspan, colspan = colspan)
-            plt.figure
-            plt.title(self.title)
-            if self.dim == 3:
-                plt.imshow(self.imgdata[0], cmap = self.color)
-            else:
-                plt.imshow(self.imgdata, cmap = self.color)
-            ibar = plt.colorbar()
-            ibar.set_label(self.colorlabel)
-            plt.gca().invert_yaxis()
-            plt.xticks([])
-            plt.yticks([])
-            plt.grid(False)
-    
+
 class PowerSpectra(object):
     
     def __init__(self,data1,data2,data3,title,ratio_x,ratio_y):
@@ -95,42 +76,278 @@ class FitsFiles(object):
         self.options.append(fitsimage.title)
         self.dataopts[fitsimage.title] = len(self.files) - 1
 
-#------------------------------------------------------------------------------#
-#--Tutorials--
-Intensity = FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','intensity','(1024x1024)')
-Magnetogram = FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)','magnetogram','(1024x1024)')
-Dopplergram = FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)','dopplergram','(1024x1024)')
-Data1 = FitsImage('data1.fits','Data 1','gray','Velocity (m/s)','data1','(128x128x512)')
-Data2 = FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2','(128x128x512)')
+#---Data---#
 
-Data = [Intensity, Magnetogram, Dopplergram, Data1, Data2] #D1vD2, Average1, Difference1,Average2,Difference2)
+Data = FitsFiles()
 
-DATA = FitsFiles()
+Data.add(FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','intensity','(1024x1024)'))
+Data.add(FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)','magnetogram','(1024x1024)'))
+Data.add(FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)','dopplergram','(1024x1024)'))
+Data.add(FitsImage('data1.fits','Data 1','gray','Velocity (m/s)','data1','(128x128x512)'))
+Data.add(FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2','(128x128x512)'))
 
-DATA.add(Intensity)
-DATA.add(Magnetogram)
-DATA.add(Dopplergram)
-DATA.add(Data1)
-DATA.add(Data2)
 
-Options = ['Intensity', 'Magnetogram', 'Dopplergram', 'Data 1', 'Data 2']
-DataIndex = [0, 1, 2, 3, 4]
+#---GUI Modules---#
 
-DataOpts = dict(zip(Options,DataIndex))
+class StatusBar(tk.Frame):
+    
+    def __init__(self,parent):
+        
+        tk.Frame.__init__(self,parent)
+        
+        text = 'Welcome to the Helioseismology Tutorial. Select data and have fun plotting!'
+        
+        self.statusbar = tk.Label(self,text=text,relief=tk.SUNKEN,bg='white',width=60,anchor='w')
+        self.statusbar.grid(row=0)
 
-#------------------------------------------------------------------------------#
-#--GUI--
+class OptionMenu(tk.LabelFrame):
+    
+    def __init__(self,parent):
+        
+        tk.LabelFrame.__init__(self,parent, text = 'Menu')
+        
+        self.choice = tk.StringVar()
+        self.choice.set('(Select a data set)')
+        
+        self.menu = tk.OptionMenu(self,self.choice,*Data.options)
+        self.menu.grid(row = 0)
+        self.menu.configure(width = 15)
+        
+        tabs = tk.Frame(self)
+        tabs.grid(row = 1)
+        
+        self.showPT = tk.Label(tabs, text = 'Range', relief = tk.RAISED, width = 8)
+        self.showPT.grid(row = 0, column = 0)
+        
+        self.showSlM = tk.Label(tabs, text = 'Slice', relief = tk.RAISED, width = 8)
+        self.showSlM.grid(row = 1, column = 0)
+        
+        self.showScM = tk.Label(tabs, text = 'Scatter', relief = tk.RAISED, width = 8)
+        self.showScM.grid(row = 1, column = 1)
+        
+        self.showAM = tk.Label(tabs, text = 'Animate', relief = tk.RAISED, width = 8)
+        self.showAM.grid(row = 1, column = 2)
+        
+        self.showCM = tk.Label(tabs, text = 'Compute', relief = tk.RAISED, width = 8)
+        self.showCM.grid(row = 0, column = 1)
+        
+    def updateMenu(self):
+        
+        m = self.menu.children['menu']
+        m.delete(0, "end")
+        for i in range(len(Data.files)):
+            m.add_command(label=Data.options[i], command=lambda value=Data.options[i]: self.choice.set(value))
 
-'''class RangeLabels(tk.Frame): #Revise this. Frame has to be argument.
+class PlotTools(tk.LabelFrame):
+    
+    def __init__(self,parent):
+        
+        tk.LabelFrame.__init__(self,parent, text = 'Plotting Tools')
+        
+        #Labels for 'Min' and 'Max'
+        minlabel = tk.Label(self,text = 'Min')
+        minlabel.grid(row=0,column=1)
+        maxlabel = tk.Label(self, text = 'Max')
+        maxlabel.grid(row=0,column = 2)
+        
+        #This label simply marks X as to identify its corresponding entry boxes
+        xtools = tk.Label(self,text='X')
+        xtools.grid(row = 1, column = 0,padx = 5)
+        
+        #Entry box for X Minimum
+        self.minrangex = tk.Entry(self,width = 6)
+        self.minrangex.grid(row=1,column=1,padx=5)
+        
+        #Entry box for X Maximum
+        self.maxrangex = tk.Entry(self,width = 6)
+        self.maxrangex.grid(row=1,column=2,padx=5)
+        
+        #Previous descriptions repeat accordingtly to Y and Z as well
+        ytools = tk.Label(self,text='Y')
+        ytools.grid(row = 2, column = 0, padx = 5)
+        
+        self.minrangey = tk.Entry(self,width = 6)
+        self.minrangey.grid(row = 2, column = 1, padx = 5)
+        
+        self.maxrangey = tk.Entry(self,width = 6)
+        self.maxrangey.grid(row = 2, column = 2, padx = 5)
+        
+        ztools = tk.Label(self,text='Z')
+        ztools.grid(row = 3, column = 0, padx = 5)
+        
+        self.minrangez = tk.Entry(self,width = 6)
+        self.minrangez.grid(row = 3, column = 1, padx = 5)
+        
+        self.maxrangez = tk.Entry(self,width = 6)
+        self.maxrangez.grid(row = 3, column = 2, padx = 5)
+    
+    def clearEntries(self):
+        
+        self.minrangex.delete(0,tk.END)
+        self.maxrangex.delete(0,tk.END)
+        self.minrangey.delete(0,tk.END)
+        self.maxrangey.delete(0,tk.END)
+        self.minrangez.delete(0,tk.END)
+        self.maxrangez.delete(0,tk.END)
 
-    def __init__(self,frame,*args,**kwargs):
+class SliceMenu(tk.LabelFrame):
+    
+    def __init__(self,parent,command):
+        
+        tk.LabelFrame.__init__(self,parent,text='Slice Plots')
+        
+        sliceentries = tk.Frame(self)
+        sliceentries.grid(row=1)
+        
+        xslicelabel = tk.Label(sliceentries,text='X')
+        xslicelabel.grid(row=0,column=0,padx=5)
+        
+        yslicelabel = tk.Label(sliceentries,text='Y')
+        yslicelabel.grid(row=0,column=1,padx=5)
+        
+        tslicelabel = tk.Label(sliceentries,text='t')
+        tslicelabel.grid(row=0,column=2,padx=5)
+        
+        self.xslice = tk.Entry(sliceentries,width = 3)
+        self.xslice.grid(row=1,column=0,padx=5)
+        
+        self.yslice = tk.Entry(sliceentries,width = 3)
+        self.yslice.grid(row=1,column=1,padx=5)
+        
+        self.tslice = tk.Entry(sliceentries,width = 3)
+        self.tslice.grid(row=1,column=2,padx=5)
+        
+        #Checkbox that allows user to open the desired image in a new window.
+        self.keep = tk.BooleanVar()
+        keepimgopt = tk.Checkbutton(self, text ='Open in new window',variable=self.keep)
+        keepimgopt.grid(row=2)
+        
+        slicebutton = tk.Button(self, text = 'View', command = command)
+        slicebutton.grid(row = 3)
+    
+    def clearEntries(self):
+        
+        self.tslice.delete(0,tk.END)
+        self.xslice.delete(0,tk.END)
+        self.yslice.delete(0,tk.END)
 
-        tk.Frame.__init__(self,*args,**kwargs)
+class ScatterMenu(tk.LabelFrame):
+    
+    def __init__(self,parent,command):
+        
+        tk.LabelFrame.__init__(self,parent,text='Scatter Plots')
+        
+        #Choose data set to be used for the x-axis
+        xaxis = tk.Label(self,text='X-Axis')
+        xaxis.grid(row = 0)
+        #self.datax = tk.StringVar()
+        #self.datax.set('')
+        #self.plotx = tk.OptionMenu(self,self.datax,*Data.options)
+        #self.plotx.grid(row = 1)
+        
+        #Choose data set to be used for the y-axis
+        yaxis = tk.Label(self,text='Y-Axis')
+        yaxis.grid(row = 2)
+        self.datay = tk.StringVar()
+        self.datay.set('')
+        self.ploty = tk.OptionMenu(self,self.datay,*Data.options)
+        self.ploty.grid(row = 3)
+        
+        #Checkbox that allows user to open the desired image in a new window.
+        self.keep = tk.BooleanVar()
+        self.keep.set(0)
+        keepplotopt = tk.Checkbutton(self, text = "Open in new window",variable=self.keep) #Implement feature
+        keepplotopt.grid(row = 4)
+        
+        plotbutton = tk.Button(self, text = 'Plot', command = command)
+        plotbutton.grid(row = 5)
+        
+        #Button that allows user to plot both data sets in a scatter plat on the canvas.
 
-        self.minlabel = tk.Label(frame,text = 'Min')
-        self.minlabel.grid(row=0,column=0)
-        self.maxlabel = tk.Label(frame, text = 'Max')
-        self.maxlabel.grid(row=0,column=1)'''
+    def updateMenu(self):
+        
+        n = self.ploty.children['menu']
+        n.delete(0, "end")
+        for i in range(len(Data.files)):
+            n.add_command(label=Data.options[i], command=lambda value=Data.options[i]: self.datay.set(value))
+
+class AnimationMenu(tk.LabelFrame):
+    
+    def __init__(self,parent,command):
+        
+        tk.LabelFrame.__init__(self,parent,text = 'Animate')
+        
+        animateoption = tk.Button(self, text='Animate',command=command)
+        animateoption.grid(row=0)
+
+class ComputationMenu(tk.LabelFrame):
+    
+    def __init__(self,parent,command):
+        
+        tk.LabelFrame.__init__(self,parent,text = 'Generate')
+        
+        #Option menu that allows user to choose data set to apply some sort of calculation.
+        #self.cmpchoice = tk.StringVar()
+        #self.cmpchoice.set('')
+        #cmpmenu = tk.OptionMenu(self,self.cmpchoice,*Data.options)
+        #cmpmenu.grid(row = 0)
+        
+        #Frame to organize checkbuttons for Average and Difference computations.
+        avgdif = tk.Frame(self)
+        avgdif.grid(row = 1)
+        
+        #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
+        self.imgavg = tk.BooleanVar()
+        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg)
+        #imgavgopt = tk.Button(avgdif, text = 'Average', command=imgaverage)
+        imgavgopt.grid(row=0,column=0)
+        
+        #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
+        self.imgdif = tk.BooleanVar()#
+        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif)
+        #imgdifopt = tk.Button(avgdif, text = 'Difference', command=imgdifference)
+        imgdifopt.grid(row=0,column=1)
+        
+        #Checkbutton that allows the user to generate a power spectra of a data set.
+        self.ps = tk.BooleanVar()#
+        powerspectraopt = tk.Checkbutton(self, text = 'Power Spectra',variable=self.ps)
+        #powerspectraopt = tk.Button(self, text='Power Spectra', command=powerspectra)
+        powerspectraopt.grid(row = 2)
+        
+        #Button that allows the user to compute the selected computations.
+        computebutton = tk.Button(self, text='Compute', command=command)
+        computebutton.grid(row = 3)
+
+class PlotCanvas(tk.Frame):
+    
+    def __init__(self,parent):
+        
+        tk.Frame.__init__(self,parent)
+        
+        self.f, self.ax = plt.subplots()
+        
+        self.canvas = FigureCanvasTkAgg(self.f, self)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
+        
+        #Displays Matplotlib figure toolbar.
+        self.toolbar = NavigationToolbar2TkAgg(self.canvas, self)
+        self.toolbar.update()
+        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+class Window(tk.Frame): #fix this
+    
+    def __init__(self,parent):
+        
+        tk.Frame.__init__(self,parent)
+        
+        self.statusBar = StatusBar(self)
+        self.statusBar.pack(anchor = 'nw', side = tk.TOP, pady = (3,3))
+        
+        self.canvas = PlotCanvas(self)
+        self.canvas.pack()
+
+#---Main App---#
 
 class Helioseismology(tk.Tk):
     
@@ -140,190 +357,277 @@ class Helioseismology(tk.Tk):
         
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
         
-        #Scatter plot function
-        def plot():
-            keep = self.keepplot.get()
-            if keep:
-                g = plt.figure(2)
-                g.clear()
-            else:
-                self.f.clear()
-                plt.figure(1)
-            index1 = DATA.dataopts[datax.get()]
-            index2 = DATA.dataopts[datay.get()]
-            minx = minrangex.get()
-            maxx = maxrangex.get()
-            miny = minrangey.get()
-            maxy = maxrangey.get()
-            try:
-                if (Data[index1].dim == 3) and (Data[index2].dim == 3):
-                    plt.plot(Data[index1].imgdata[0],Data[index2].imgdata[0],',',color='black')
-                else:
-                    plt.plot(Data[index1].imgdata,Data[index2].imgdata,',',color='black')
-                plt.xlabel(Data[index1].colorlabel)
-                plt.ylabel(Data[index2].colorlabel)
-                if (minx and maxx):
-                    minx = int(minx)
-                    maxx = int(maxx)
-                    plt.xlim(minx,maxx)
-                if (miny and maxy):
-                    miny = int(miny)
-                    maxy = int(maxy)
-                    plt.ylim(miny,maxy)
-                if keep:
-                    kept = tk.Toplevel()
-                    
-                    text="Showing plot of "+Data[index1].title+" against "+Data[index2].title
-                    self.statusbar = tk.Label(kept,text=text,relief=tk.SUNKEN,bg='white',width=60,anchor='w')
-                    self.statusbar.pack(anchor='nw',side=tk.TOP,pady=(3,3))
-                    
-                    keptcanvas = FigureCanvasTkAgg(g, kept)
-                    keptcanvas.show()
-                    keptcanvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
-                    
-                    kepttoolbar = NavigationToolbar2TkAgg(keptcanvas, kept)
-                    kepttoolbar.update()
-                    keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-                else:
-                    self.f.canvas.draw()
-                    self.statusbar.config(text="Showing plot of "+Data[index1].title+" against "+Data[index2].title)
-                minrangex.delete(0,tk.END)
-                maxrangex.delete(0,tk.END)
-                minrangey.delete(0,tk.END)
-                maxrangey.delete(0,tk.END)
-            except Exception:
-                self.statusbar.config(text="Can't plot these data sets! Differente sizes.")
+        self.statusBar = StatusBar(self)
+        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W)
         
-        def viewslice():
-            keep = self.keepimg.get()
-            if keep:
-                g = plt.figure(2)
-                g.clear()
-            else:
-                self.f.clear()
-                plt.figure(1)
-            index = DATA.dataopts[self.slicechoice.get()]
-            minx = minrangex.get()
-            maxx = maxrangex.get()
-            miny = minrangey.get()
-            maxy = maxrangey.get()
-            minz = minrangez.get()
-            maxz = maxrangez.get()
-            slicex = xslice.get()
-            slicey = yslice.get()
-            slicet = tslice.get()
+        self.mainCanvas = PlotCanvas(self)
+        self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 2, sticky = tk.W+tk.E+tk.N+tk.S)
+        
+        sideMenu = tk.Frame()
+        sideMenu.grid(row = 1, column = 3,sticky = tk.N+tk.S)
+        
+        self.optionMenu = OptionMenu(sideMenu)
+        self.optionMenu.grid(row = 0, sticky = tk.E+tk.W)
+        
+        self.plotTools = PlotTools(sideMenu)
+        self.plotTools.grid(row = 1, sticky = tk.E+tk.W, ipady = 3)
+        self.plotTools.grid_remove()
+        
+        self.sliceMenu = SliceMenu(sideMenu,self.viewslice)
+        self.sliceMenu.grid(row = 2, sticky = tk.E+tk.W, ipady = 3)
+        self.sliceMenu.grid_remove()
+        
+        self.scatterMenu = ScatterMenu(sideMenu,self.plot)
+        self.scatterMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
+        self.scatterMenu.grid_remove()
+        
+        self.animationMenu = AnimationMenu(sideMenu,self.animation)
+        self.animationMenu.grid(row = 4, sticky = tk.E+tk.W, ipady = 3)
+        self.animationMenu.grid_remove()
+        
+        self.computationMenu = ComputationMenu(sideMenu,self.compute)
+        self.computationMenu.grid(row = 5, sticky = tk.E+tk.W, ipady = 3)
+        self.computationMenu.grid_remove()
+        
+        
+        self.optionMenu.showPT.bind('<Button-1>',self.showPT)
+        self.optionMenu.showSlM.bind('<Button-1>',self.showSlM)
+        self.optionMenu.showScM.bind('<Button-1>',self.showScM)
+        self.optionMenu.showCM.bind('<Button-1>',self.showCM)
+        self.optionMenu.showAM.bind('<Button-1>',self.showAM)
+        
+        self.columnconfigure(0, weight = 10)
+        self.rowconfigure(1, weight = 10)
+        self.PT = False
+        self.SlM = False
+        self.ScM = False
+        self.CM = False
+        self.AM = False
+
+    def viewslice(self):
+        keep = self.sliceMenu.keep.get()
+        
+        if keep:
+            sliceWindow = tk.Toplevel()
+            sliceWindow.withdraw()
             
-            image = DATA.files[index]
-            
-            labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
-            labelindx = None
-            labelindy = None
-            
-            if (minz and maxz):
-                minz = int(minz)
-                maxz = int(maxz)
-            else:
-                minz = None
-                maxz = None
-            
-            if image.dim == 3:
-                sizet = np.arange(image.shape[0])
-                sizey = np.arange(image.shape[1])
-                sizex = np.arange(image.shape[2])
-                if slicex:
-                    slicex = int(slicex)
-                    if slicey:
-                        slicey = int(slicey)
-                        labelindx = 1
-                        slicetext = 'x = '+xslice.get()+' and y = '+yslice.get()
-                        data = image.imgdata[:,slicey,slicex]
-                        plt.plot(sizet,data,lw=0.5,color='black')
-                    elif slicet:
-                        slicet = int(slicet)
-                        labelindx = 3
-                        slicetext = 't = '+tslice.get()+' and x = '+xslice.get()
-                        data = image.imgdata[slicet,:,slicex]
-                        plt.plot(sizey,data,lw=0.5,color='black')
-                    else:
-                        labelindx = 1
-                        labelindy = 3
-                        slicetext = 'x = '+xslice.get()
-                        data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
-                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                elif slicey:
+            sliceFrame = Window(sliceWindow)
+            sliceFrame.pack()
+        else:
+            self.mainCanvas.f.clear()
+            plt.figure(1)
+        
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        minx = self.plotTools.minrangex.get()
+        maxx = self.plotTools.maxrangex.get()
+        miny = self.plotTools.minrangey.get()
+        maxy = self.plotTools.maxrangey.get()
+        minz = self.plotTools.minrangez.get()
+        maxz = self.plotTools.maxrangez.get()
+        slicex = self.sliceMenu.xslice.get()
+        slicey = self.sliceMenu.yslice.get()
+        slicet = self.sliceMenu.tslice.get()
+        textx = str(slicex)
+        texty = str(slicey)
+        textt = str(slicet)
+        
+        image = Data.files[index]
+        
+        labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
+        labelindx = None
+        labelindy = None
+        
+        if (minz and maxz):
+            minz = int(minz)
+            maxz = int(maxz)
+        else:
+            minz = None
+            maxz = None
+        
+        if image.dim == 3:
+            sizet = np.arange(image.shape[0])
+            sizey = np.arange(image.shape[1])
+            sizex = np.arange(image.shape[2])
+            if slicex:
+                slicex = int(slicex)
+                if slicey:
                     slicey = int(slicey)
-                    if slicet:
-                        slicet = int(slicet)
-                        labelindx = 2
-                        slicetext = 't = '+tslice.get()+' and y = '+yslice.get()
-                        data = image.imgdata[slicet,slicey,:]
-                        plt.plot(sizex,data,lw=0.5,color='black')
-                    else:
-                        labelindx = 2
-                        labelindy = 1
-                        slicetext = 'y = '+yslice.get()
-                        data = image.imgdata[:,slicey,:]
-                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                    labelindx = 1
+                    slicetext = 'x = '+textx+' and y = '+texty
+                    data = image.imgdata[:,slicey,slicex]
+                    plt.plot(sizet,data,lw=0.5,color='black')
                 elif slicet:
                     slicet = int(slicet)
-                    labelindx = 2
-                    labelindy = 3
-                    slicetext = 't = '+tslice.get()
-                    data = image.imgdata[slicet,...]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                else:
-                    data = image.imgdata[0]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                    labelindx = 2
-                    labelindy = 3
-                    slicetext = 't = 0'
-                
-                if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
-                    plt.title(labels[0]+' vs '+labels[labelindx]+' at '+slicetext)
-                    plt.ylabel(labels[0])
-                    plt.xlabel(labels[labelindx])
-                else:
-                    plt.title('Slice of '+image.title+' at '+slicetext)
-                    plt.xlabel(labels[labelindx])
-                    plt.ylabel(labels[labelindy])
-                    ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel)
-            
-            elif image.dim == 2:
-                sizey = np.arange(image.shape[0])
-                sizex = np.arange(image.shape[1])
-                if slicex:
-                    slicex=int(slicex)
-                    plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
                     labelindx = 3
-                    slicetext = 'x ='+xslice.get()
-                elif slicey:
-                    slicey=int(slicey)
-                    plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
-                    labelindx = 2
-                    slicetext = 'y ='+yslice.get()
+                    slicetext = 't = '+textt+' and x = '+textx
+                    data = image.imgdata[slicet,:,slicex]
+                    plt.plot(sizey,data,lw=0.5,color='black')
                 else:
-                    plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
-                    labelindx = 2
+                    labelindx = 1
                     labelindy = 3
-                if (slicex or slicey):
-                    plt.title(image.colorlabel+' at '+slicetext)
-                    plt.ylabel(image.colorlabel)
-                    plt.xlabel(labels[labelindx])
+                    slicetext = 'x = '+textx
+                    data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+            elif slicey:
+                slicey = int(slicey)
+                if slicet:
+                    slicet = int(slicet)
+                    labelindx = 2
+                    slicetext = 't = '+textt+' and y = '+texty
+                    data = image.imgdata[slicet,slicey,:]
+                    plt.plot(sizex,data,lw=0.5,color='black')
                 else:
-                    plt.title(image.title)
-                    plt.xlabel(labels[labelindx])
-                    plt.ylabel(labels[labelindy])
-                    ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel)
-            
+                    labelindx = 2
+                    labelindy = 1
+                    slicetext = 'y = '+texty
+                    data = image.imgdata[:,slicey,:]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+            elif slicet:
+                slicet = int(slicet)
+                labelindx = 2
+                labelindy = 3
+                slicetext = 't = '+textt
+                data = image.imgdata[slicet,...]
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
             else:
-                plt.xlabel('wavenumber l')
-                plt.ylabel('frequency (mHz)')
-                plt.xticks(image.xticksmin, image.xticksmax)
-                plt.yticks(image.yticksmin, image.yticksmax)
-                plt.contourf(image.data1, image.data2, image.data3, 100)
+                data = image.imgdata[0]
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                labelindx = 2
+                labelindy = 3
+                slicetext = 't = 0'
+            
+            if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
+                plt.title(labels[0]+' vs '+labels[labelindx]+' at '+slicetext)
+                plt.ylabel(labels[0])
+                plt.xlabel(labels[labelindx])
+            else:
+                plt.title('Slice of '+image.title+' at '+slicetext)
+                plt.xlabel(labels[labelindx])
+                plt.ylabel(labels[labelindy])
+                ibar = plt.colorbar()
+                ibar.set_label(image.colorlabel)
         
+        elif image.dim == 2:
+            sizey = np.arange(image.shape[0])
+            sizex = np.arange(image.shape[1])
+            if slicex:
+                slicex=int(slicex)
+                plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
+                labelindx = 3
+                slicetext = 'x ='+textx
+            elif slicey:
+                slicey=int(slicey)
+                plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
+                labelindx = 2
+                slicetext = 'y ='+texty
+            else:
+                plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
+                labelindx = 2
+                labelindy = 3
+            if (slicex or slicey):
+                plt.title(image.colorlabel+' at '+slicetext)
+                plt.ylabel(image.colorlabel)
+                plt.xlabel(labels[labelindx])
+            else:
+                plt.title(image.title)
+                plt.xlabel(labels[labelindx])
+                plt.ylabel(labels[labelindy])
+                ibar = plt.colorbar()
+                ibar.set_label(image.colorlabel)
+        
+        else:
+            plt.xlabel('Wavenumber l')
+            plt.ylabel('Frequency (mHz)')
+            plt.xticks(image.xticksmin, image.xticksmax)
+            plt.yticks(image.yticksmin, image.yticksmax)
+            plt.contourf(image.data1, image.data2, image.data3, 100)
+    
+        if (minx and maxx):
+            minx = int(minx)
+            maxx = int(maxx)
+            plt.xlim(minx,maxx)
+        if (miny and maxy):
+            miny = int(miny)
+            maxy = int(maxy)
+            plt.ylim(maxy,miny)
+        
+        if image.dim == 1:
+            text = 'Showing: ' + image.title
+        else:
+            text = "Showing: "+image.title+'. Size: '+image.dimensions
+        
+        if keep:
+            sliceFrame.statusBar.statusbar.config(text = text)
+            sliceWindow.deiconify()
+        else:
+            self.mainCanvas.f.canvas.draw()
+            self.statusBar.statusbar.config(text = text)
+        
+        self.plotTools.clearEntries()
+        self.sliceMenu.clearEntries()
+    
+    def animation(self):
+        keep = self.sliceMenu.keep.get()
+        
+        aniWindow = tk.Toplevel()
+        
+        aniFrame = Window(aniWindow)
+        aniFrame.pack()
+        
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        minx = self.plotTools.minrangex.get()
+        maxx = self.plotTools.maxrangex.get()
+        miny = self.plotTools.minrangey.get()
+        maxy = self.plotTools.maxrangey.get()
+        minz = self.plotTools.minrangez.get()
+        maxz = self.plotTools.maxrangez.get()
+        slicex = self.sliceMenu.xslice.get()
+        slicey = self.sliceMenu.yslice.get()
+        slicet = self.sliceMenu.tslice.get()
+        textx = str(slicex)
+        texty = str(slicey)
+        textt = str(slicet)
+        image = Data.files[index]
+        
+        ims = []
+        for i in range(512):
+            im = plt.imshow(image.imgdata[i], cmap = 'gray')
+            ims.append([im])
+        
+        ani = animation.ArtistAnimation(aniFrame.canvas.f,ims)#,interval=100, blit=True, repeat_delay=1000)
+        
+        ani._start()
+    
+    def plot(self):
+        keep = self.scatterMenu.keep.get()
+        
+        if keep:
+            plotWindow = tk.Toplevel()
+            plotWindow.withdraw()
+            
+            plotFrame = Window(plotWindow)
+            plotFrame.pack()
+        
+        else:
+            self.mainCanvas.f.clear()
+            plt.figure(1)
+        
+        index1 = Data.dataopts[self.optionMenu.choice.get()]
+        index2 = Data.dataopts[self.scatterMenu.datay.get()]
+        minx = self.plotTools.minrangex.get()
+        maxx = self.plotTools.maxrangex.get()
+        miny = self.plotTools.minrangey.get()
+        maxy = self.plotTools.maxrangey.get()
+        data1 = Data.files[index1]
+        data2 = Data.files[index2]
+        
+        try:
+            if (data1.dim == 3) and (data2.dim == 3):
+                plt.plot(data1.imgdata[0],data2.imgdata[0],',',color='black')
+            else:
+                plt.plot(data1.imgdata,data2.imgdata,',',color='black')
+            plt.xlabel(data1.colorlabel)
+            plt.ylabel(data2.colorlabel)
             if (minx and maxx):
                 minx = int(minx)
                 maxx = int(maxx)
@@ -331,92 +635,47 @@ class Helioseismology(tk.Tk):
             if (miny and maxy):
                 miny = int(miny)
                 maxy = int(maxy)
-                plt.ylim(maxy,miny)
+                plt.ylim(miny,maxy)
+            
+            text = "Showing plot of "+data1.title+" against "+data2.title
             
             if keep:
-                kept = tk.Toplevel()
-                
-                if image.dim == 1:
-                    text = 'Showing: '
-                else:
-                    text="Showing: "+image.title+'. Size: '+image.dimensions
-                self.statusbar = tk.Label(kept,text=text,relief=tk.SUNKEN,bg='white',width=60,anchor='w')
-                self.statusbar.pack(anchor='nw',side=tk.TOP,pady=(3,3))
-                
-                keptcanvas = FigureCanvasTkAgg(g, kept)
-                keptcanvas.show()
-                keptcanvas.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-                
-                kepttoolbar = NavigationToolbar2TkAgg(keptcanvas, kept)
-                kepttoolbar.update()
-                keptcanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+                plotFrame.statusBar.statusbar.config(text = text)
+                plotWindow.deiconify()
             else:
-                self.f.canvas.draw()
-                if image.dim == 1:
-                    self.statusbar.config(text = 'Showing: ' + image.title)
-                else:
-                    self.statusbar.config(text="Showing: "+image.title+'. Size: '+image.dimensions)
+                self.mainCanvas.f.canvas.draw()
+                self.statusBar.statusbar.config(text=text)
             
-            minrangex.delete(0,tk.END)
-            maxrangex.delete(0,tk.END)
-            minrangey.delete(0,tk.END)
-            maxrangey.delete(0,tk.END)
-            minrangez.delete(0,tk.END)
-            maxrangez.delete(0,tk.END)
-            tslice.delete(0,tk.END)
-            xslice.delete(0,tk.END)
-            yslice.delete(0,tk.END)
-        
-        '''def animate(): #FIX
-            h = plt.figure(3)
-            index = DATA.dataopts[self.slicechoice.get()]
-            minz = minrangez.get()
-            maxz = maxrangez.get()
-            if DATA.files[index].dim == 3:
-                ims = []
-                for i in range(DATA.files[index].shape[0]):
-                    im = plt.imshow(DATA.files[index].imgdata[i], cmap = DATA.files[index].color, vmin=minz, vmax=maxz)
-                    ims.append([im])
-                plt.title(DATA.files[index].title)
-                
-                Ani = animation.ArtistAnimation(h, ims, interval=100, blit=True,
-                    repeat_delay=1000)
-                
-                aniwin = tk.Toplevel()
-                anicanvas = FigureCanvasTkAgg(h,aniwin)
-                anicanvas.show()
-                anicanvas.get_tk_widget().pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-                
-                anitoolbar = NavigationToolbar2TkAgg(anicanvas, aniwin)
-                anitoolbar.update()
-                anicanvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)'''
-        
-        def imgaverage(): #IT LIVES!!!
-            index = DATA.dataopts[cmpchoice.get()]
-            average = (DATA.files[index].imgdata[0] + DATA.files[index].imgdata[2])/2
-            title = DATA.files[index].title + ' Average'
-            color = DATA.files[index].color
-            colorlabel = DATA.files[index].colorlabel
-            shortname = 'avg'+DATA.files[index].shortname
-            dimensions = DATA.files[index].dimensions
-            DATA.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
-            #updatemenu()
-        
-        def imgdifference():
-            index = DATA.dataopts[cmpchoice.get()]
-            difference = DATA.files[index].imgdata[2] - DATA.files[index].imgdata[1]
-            title = DATA.files[index].title + ' Difference'
-            color = DATA.files[index].color
-            colorlabel = DATA.files[index].colorlabel
-            shortname = 'dif'+DATA.files[index].shortname
-            dimensions = DATA.files[index].dimensions
-            DATA.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
-            #updatemenu()
-        
-        def powerspectra():
-            index = DATA.dataopts[cmpchoice.get()]
+            self.plotTools.clearEntries()
             
-            ofrq1 = np.fft.fftn(DATA.files[index].imgdata)
+        except Exception:
+            self.statusBar.statusbar.config(text="Can't plot these data sets! Differente sizes.")
+            plotWindow.destroy()
+    
+    def imgaverage(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        average = (Data.files[index].imgdata[0] + Data.files[index].imgdata[2])/2
+        title = Data.files[index].title + ' Average'
+        color = Data.files[index].color
+        colorlabel = Data.files[index].colorlabel
+        shortname = 'avg'+Data.files[index].shortname
+        dimensions = Data.files[index].dimensions
+        Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
+    
+    def imgdifference(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        difference = Data.files[index].imgdata[2] - Data.files[index].imgdata[1]
+        title = Data.files[index].title + ' Difference'
+        color = Data.files[index].color
+        colorlabel = Data.files[index].colorlabel
+        shortname = 'dif'+Data.files[index].shortname
+        dimensions = Data.files[index].dimensions
+        Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
+    
+    def powerspectra(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        try:
+            ofrq1 = np.fft.fftn(Data.files[index].imgdata)
             frq1 = np.fft.fftshift(ofrq1)
             power = np.log(np.abs(frq1**2))
             
@@ -463,254 +722,77 @@ class Helioseismology(tk.Tk):
             frq = v*1000 # in unit of mHz
             ratio_y = frq/256
             
-            title = DATA.files[index].title + ' Power Spectra'
+            title = Data.files[index].title + ' Power Spectra'
             
-            DATA.add(PowerSpectra(M,N,A,title,ratio_x,ratio_y))
-            #updatemenu()
-        
-        def updatemenu():
-            m = self.slicemenu.children['menu']
-            m.delete(0, "end")
-            for i in range(len(DATA.files)):
-                m.add_command(label=DATA.options[i], command=lambda value=DATA.options[i]: self.slicechoice.set(value))
-        
-        def compute():
-            avg = self.imgavg.get()
-            dif = self.imgdif.get()
-            ps = self.ps.get()
+            Data.add(PowerSpectra(M,N,A,title,ratio_x,ratio_y))
             
-            if avg:
-                imgaverage()
-            if dif:
-                imgdifference()
-            if ps:
-                powerspectra()
-            
-            updatemenu()
+        except:
+            self.statusBar.statusbar.config(text="Can't calculate power spectrum! Wrong data set.")
+    
+    def compute(self):
+        avg = self.computationMenu.imgavg.get()
+        dif = self.computationMenu.imgdif.get()
+        ps = self.computationMenu.ps.get()
         
-        #This is the main frame. It contains and organizes all other frames in the window.
-        container=tk.Frame(self)
-        container.pack(side='top',fill='both',expand=True)
-        container.grid_rowconfigure(0,weight=1)
-        container.grid_columnconfigure(0,weight=1)
+        if avg:
+            self.imgaverage()
+        if dif:
+            self.imgdifference()
+        if ps:
+            self.powerspectra()
         
-        #This frame is the top one, holding the status bar that follows.
-        menu = tk.Frame(container)
-        menu.pack(side=tk.TOP, fill=tk.X)
-        
-        #Status bar at top right of window. Gives feedback to user.
-        self.statusbar = tk.Label(menu,text='Welcome to the Helioseismology Tutorial. Select data and have fun plotting!',relief=tk.SUNKEN,bg='white',width=60,anchor='w')
-        self.statusbar.pack(anchor='nw',side=tk.LEFT,pady=(3,3))
-        
-        #This frame is the frame containing the canvas and all plotting tools.
-        frame = tk.Frame(container)
-        frame.pack(side=tk.TOP,fill=tk.BOTH,expand=True)
-        
-        #This frame is the one used to organize plotting tools.
-        sideframe = tk.Frame(frame)
-        sideframe.pack(side=tk.RIGHT,anchor='n')
-        
-        #--Menu Frames--#
-        #All the main frames in order, as for ease of re-arrangement.
-        
-        #Tools for changing display of image or plot, such as setting X Y Z limits.
-        toolsframe = tk.LabelFrame(sideframe,text='Plot Tools')
-        toolsframe.pack(side=tk.TOP,fill=tk.X)
-        
-        #Frame for slice plots
-        sliceframe = tk.LabelFrame(sideframe, text='Slice Plots')
-        sliceframe.pack(side=tk.TOP,fill=tk.X)
-        
-        #Frame for scatter plot options
-        scatterframe = tk.LabelFrame(sideframe, text="Scatter Plots")
-        scatterframe.pack(side=tk.TOP,fill=tk.X)
-        
-        #Frame for computation of various functions to FITS files.
-        computeframe = tk.LabelFrame(sideframe, text='Generate')
-        computeframe.pack(side=tk.TOP,fill=tk.X)
-        
-        #--Tools Frame Widgets--#
-        
-        #This label simply marks X as to identify its corresponding entry boxes
-        xtools = tk.Label(toolsframe,text='X')
-        xtools.pack(side=tk.TOP)
-        
-        #Small frame to neatly organize min and max entry boxes and labels
-        rangeframex = tk.Frame(toolsframe)
-        rangeframex.pack(side=tk.TOP)
-        
-        #Labels for 'Min' and 'Max'
-        minlabelx = tk.Label(rangeframex,text = 'Min')
-        minlabelx.grid(row=0,column=0)
-        maxlabelx = tk.Label(rangeframex, text = 'Max')
-        maxlabelx.grid(row=0,column=1)
-        
-        #Entry box for X Minimum
-        minrangex = tk.Entry(rangeframex,width = 6)
-        minrangex.grid(row=1,column=0,padx=5)
-        
-        #Entry box for X Maximum
-        maxrangex = tk.Entry(rangeframex,width = 6)
-        maxrangex.grid(row=1,column=1,padx=5)
-        
-        #Previous descriptions repeat accordingtly to Y and Z as well
-        ytools = tk.Label(toolsframe,text='Y')
-        ytools.pack(side=tk.TOP)
-        
-        rangeframey = tk.Frame(toolsframe)
-        rangeframey.pack(side=tk.TOP)
-        
-        minlabely = tk.Label(rangeframey,text = 'Min')
-        minlabely.grid(row=0,column=0)
-        maxlabely = tk.Label(rangeframey, text = 'Max')
-        maxlabely.grid(row=0,column=1)
-        
-        minrangey = tk.Entry(rangeframey,width = 6)
-        minrangey.grid(row=1,column=0,padx=5)
-        
-        maxrangey = tk.Entry(rangeframey,width = 6)
-        maxrangey.grid(row=1,column=1,padx=5)
-        
-        ztools = tk.Label(toolsframe,text='Z')
-        ztools.pack(side=tk.TOP)
-        
-        rangeframez = tk.Frame(toolsframe)
-        rangeframez.pack(side=tk.TOP)
-        
-        minlabelz = tk.Label(rangeframez,text = 'Min')
-        minlabelz.grid(row=0,column=0)
-        maxlabelz = tk.Label(rangeframez, text = 'Max')
-        maxlabelz.grid(row=0,column=1)
-        
-        minrangez = tk.Entry(rangeframez,width = 6)
-        minrangez.grid(row=2,column=0,padx=5)
-        
-        maxrangez = tk.Entry(rangeframez,width = 6)
-        maxrangez.grid(row=2,column=1,padx=5,pady=(0,5))
-        
-        #--Slice Frame Widgets--#
-        
-        self.slicechoice = tk.StringVar()
-        self.slicechoice.set('')
-        self.slicemenu = tk.OptionMenu(sliceframe,self.slicechoice,*DATA.options)
-        self.slicemenu.pack(side=tk.TOP)
-        
-        sliceentries = tk.Frame(sliceframe)
-        sliceentries.pack(side=tk.TOP)
-        
-        xslicelabel = tk.Label(sliceentries,text='X')
-        xslicelabel.grid(row=0,column=0,padx=5)
-        
-        yslicelabel = tk.Label(sliceentries,text='Y')
-        yslicelabel.grid(row=0,column=1,padx=5)
-        
-        tslicelabel = tk.Label(sliceentries,text='t')
-        tslicelabel.grid(row=0,column=2,padx=5)
-        
-        xslice = tk.Entry(sliceentries,width = 3)
-        xslice.grid(row=1,column=0,padx=5)
-        
-        yslice = tk.Entry(sliceentries,width = 3)
-        yslice.grid(row=1,column=1,padx=5)
-        
-        tslice = tk.Entry(sliceentries,width = 3)
-        tslice.grid(row=1,column=2,padx=5)
-        
-        #Checkbox that allows user to open the desired image in a new window.
-        self.keepimg = tk.BooleanVar()
-        keepimgopt = tk.Checkbutton(sliceframe, text = "Open in new window",variable=self.keepimg)
-        keepimgopt.pack(side=tk.TOP)
-        
-        #self.animate = tk.BooleanVar()
-        animateoption = tk.Button(sliceframe, text='Animate',command=animate)
-        animateoption.pack(side=tk.TOP,pady=(0,5))
-        
-        slicebutton = tk.Button(sliceframe, text='Plot',command=viewslice)
-        slicebutton.pack(side=tk.TOP,pady=(0,5))
-        
-        #--Scatter Plot Frame--#
-        
-        #Choose data set to be used for the x-axis
-        xaxis = tk.Label(scatterframe,text='X-Axis')
-        xaxis.pack(side=tk.TOP)
-        datax = tk.StringVar()
-        datax.set('')
-        plotx = tk.OptionMenu(scatterframe,datax,*DATA.options)
-        plotx.pack(side=tk.TOP)
-        
-        #Choose data set to be used for the y-axis
-        yaxis = tk.Label(scatterframe,text='Y-Axis')
-        yaxis.pack(side=tk.TOP)
-        datay = tk.StringVar()
-        datay.set('')
-        ploty = tk.OptionMenu(scatterframe,datay,*DATA.options)
-        ploty.pack(side=tk.TOP)
-        
-        #Checkbox that allows user to open the desired image in a new window.
-        self.keepplot = tk.BooleanVar()
-        self.keepplot.set(0)
-        keepplotopt = tk.Checkbutton(scatterframe, text = "Open in new window",variable=self.keepplot) #Implement feature
-        keepplotopt.pack(side=tk.TOP)
-        
-        #Button that allows user to plot both data sets in a scatter plat on the canvas.
-        plotbutton = tk.Button(scatterframe, text='Plot', command=plot)
-        plotbutton.pack(side=tk.TOP,pady=(0,5))
-        
-        #--Computation Frame Widgets--#
-        
-        #Option menu that allows user to choose data set to apply some sort of calculation.
-        cmpchoice = tk.StringVar()
-        cmpchoice.set('')
-        cmpmenu = tk.OptionMenu(computeframe,cmpchoice,*DATA.options)
-        cmpmenu.pack(side=tk.TOP)
-        
-        #These checkbuttons will most likely change to buttons, so temporary.
-        
-        #Frame to organize checkbuttons for Average and Difference computations.
-        avgdif = tk.Frame(computeframe)
-        avgdif.pack(side=tk.TOP)
-        
-        #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
-        self.imgavg = tk.BooleanVar()
-        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg)
-        #imgavgopt = tk.Button(avgdif, text = 'Average', command=imgaverage)
-        imgavgopt.grid(row=0,column=0)
-        
-        #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
-        self.imgdif = tk.BooleanVar()#
-        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif)
-        #imgdifopt = tk.Button(avgdif, text = 'Difference', command=imgdifference)
-        imgdifopt.grid(row=0,column=1)
-        
-        #Checkbutton that allows the user to generate a power spectra of a data set.
-        self.ps = tk.BooleanVar()#
-        powerspectraopt = tk.Checkbutton(computeframe, text = 'Power Spectra',variable=self.ps)
-        #powerspectraopt = tk.Button(computeframe, text='Power Spectra', command=powerspectra)
-        powerspectraopt.pack(side=tk.TOP)
-        
-        #Button that allows the user to compute the selected computations.
-        computebutton = tk.Button(computeframe, text='Compute', command=compute)
-        computebutton.pack(side=tk.TOP,pady=(0,5))
-        
-        #Button to open tutorial documentation
-        documentation = tk.Button(sideframe, text='Documentation',command=None)
-        documentation.pack(side=tk.TOP,pady=(10,0))
-        
-        #plot1.bind('<ButtonRelease-1>', tutorialSelect1)
-        
-        #Main figure in order to display generated plots.
-        self.f=plt.figure(1)
-        
-        #Canvas widget which contains the figure to show plots.
-        canvas = FigureCanvasTkAgg(self.f, frame)
-        canvas.show()
-        canvas.get_tk_widget().pack(side=tk.RIGHT,fill=tk.BOTH,expand=True)
-        
-        #Displays Matplotlib figure toolbar.
-        toolbar = NavigationToolbar2TkAgg(canvas, frame)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        
+        self.optionMenu.updateMenu()
+        self.scatterMenu.updateMenu()
+    
+    def showPT(self,event):
+        if not self.PT:
+            self.PT = True
+            self.optionMenu.showPT.config(relief = tk.SUNKEN)
+            self.plotTools.grid()
+        else:
+            self.PT = False
+            self.optionMenu.showPT.config(relief = tk.RAISED)
+            self.plotTools.grid_remove()            
+    
+    def showSlM(self,event):
+        if not self.SlM:
+            self.SlM = True
+            self.optionMenu.showSlM.config(relief = tk.SUNKEN)
+            self.sliceMenu.grid()
+        else:
+            self.SlM = False
+            self.optionMenu.showSlM.config(relief = tk.RAISED)
+            self.sliceMenu.grid_remove() 
+    
+    def showScM(self,event):
+        if not self.ScM:
+            self.ScM = True
+            self.optionMenu.showScM.config(relief = tk.SUNKEN)
+            self.scatterMenu.grid()
+        else:
+            self.ScM = False
+            self.optionMenu.showScM.config(relief = tk.RAISED)
+            self.scatterMenu.grid_remove() 
+    
+    def showCM(self,event):
+        if not self.CM:
+            self.CM = True
+            self.optionMenu.showCM.config(relief = tk.SUNKEN)
+            self.computationMenu.grid()
+        else:
+            self.CM = False
+            self.optionMenu.showCM.config(relief = tk.RAISED)
+            self.computationMenu.grid_remove() 
+    
+    def showAM(self,event):
+        if not self.AM:
+            self.AM = True
+            self.optionMenu.showAM.config(relief = tk.SUNKEN)
+            self.animationMenu.grid()
+        else:
+            self.AM = False
+            self.optionMenu.showAM.config(relief = tk.RAISED)
+            self.animationMenu.grid_remove() 
+    
 app = Helioseismology()
-#app.wm_attributes('-zoomed', True)
 app.mainloop()
