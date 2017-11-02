@@ -379,7 +379,19 @@ class Window(tk.Frame): #fix this
         self.statusBar.pack(anchor = 'nw', side = tk.TOP, pady = (3,3))
         
         self.canvas = PlotCanvas(self)
-        self.canvas.pack()
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+class Image(tk.Frame):
+    
+    def __init__(self,parent,filedirectory):
+        
+        tk.Frame.__init__(self,parent)
+        
+        self.img = tk.PhotoImage(file = filedirectory)
+        
+        self.image = tk.Label(image = self.img)
+        self.image.image = self.img
+        self.image.grid()
 
 #---Main App---#
 
@@ -437,174 +449,16 @@ class Helioseismology(tk.Tk):
 
     def viewslice(self):
         keep = self.sliceMenu.keep.get()
-        
-        if keep:
-            sliceWindow = tk.Toplevel()
-            sliceWindow.withdraw()
-            
-            sliceFrame = Window(sliceWindow)
-            sliceFrame.pack()
-        else:
-            self.mainCanvas.f.clear()
-            plt.figure(1)
-        
-        index = Data.dataopts[self.optionMenu.choice.get()]
-        minx = self.plotTools.minrangex.get()
-        maxx = self.plotTools.maxrangex.get()
-        miny = self.plotTools.minrangey.get()
-        maxy = self.plotTools.maxrangey.get()
-        minz = self.plotTools.minrangez.get()
-        maxz = self.plotTools.maxrangez.get()
-        slicex = self.sliceMenu.xslice.get()
-        slicey = self.sliceMenu.yslice.get()
-        slicet = self.sliceMenu.tslice.get()
-        textx = str(slicex)
-        texty = str(slicey)
-        textt = str(slicet)
-        
-        image = Data.files[index]
-        
-        labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
-        labelindx = None
-        labelindy = None
-        
-        if (minz and maxz):
-            minz = int(minz)
-            maxz = int(maxz)
-        else:
-            minz = None
-            maxz = None
-        
-        if image.dim == 3:
-            sizet = np.arange(image.shape[0])
-            sizey = np.arange(image.shape[1])
-            sizex = np.arange(image.shape[2])
-            if slicex:
-                slicex = int(slicex)
-                if slicey:
-                    slicey = int(slicey)
-                    labelindx = 1
-                    slicetext = 'x = '+textx+' and y = '+texty
-                    data = image.imgdata[:,slicey,slicex]
-                    plt.plot(sizet,data,lw=0.5,color='black')
-                elif slicet:
-                    slicet = int(slicet)
-                    labelindx = 3
-                    slicetext = 't = '+textt+' and x = '+textx
-                    data = image.imgdata[slicet,:,slicex]
-                    plt.plot(sizey,data,lw=0.5,color='black')
-                else:
-                    labelindx = 1
-                    labelindy = 3
-                    slicetext = 'x = '+textx
-                    data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-            elif slicey:
-                slicey = int(slicey)
-                if slicet:
-                    slicet = int(slicet)
-                    labelindx = 2
-                    slicetext = 't = '+textt+' and y = '+texty
-                    data = image.imgdata[slicet,slicey,:]
-                    plt.plot(sizex,data,lw=0.5,color='black')
-                else:
-                    labelindx = 2
-                    labelindy = 1
-                    slicetext = 'y = '+texty
-                    data = image.imgdata[:,slicey,:]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-            elif slicet:
-                slicet = int(slicet)
-                labelindx = 2
-                labelindy = 3
-                slicetext = 't = '+textt
-                data = image.imgdata[slicet,...]
-                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-            else:
-                data = image.imgdata[0]
-                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                labelindx = 2
-                labelindy = 3
-                slicetext = 't = 0'
-            
-            if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
-                plt.title(labels[0]+' vs '+labels[labelindx]+' at '+slicetext)
-                plt.ylabel(labels[0])
-                plt.xlabel(labels[labelindx])
-            else:
-                plt.title('Slice of '+image.title+' at '+slicetext)
-                plt.xlabel(labels[labelindx])
-                plt.ylabel(labels[labelindy])
-                ibar = plt.colorbar()
-                ibar.set_label(image.colorlabel)
-        
-        elif image.dim == 2:
-            sizey = np.arange(image.shape[0])
-            sizex = np.arange(image.shape[1])
-            if slicex:
-                slicex=int(slicex)
-                plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
-                labelindx = 3
-                slicetext = 'x ='+textx
-            elif slicey:
-                slicey=int(slicey)
-                plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
-                labelindx = 2
-                slicetext = 'y ='+texty
-            else:
-                plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
-                labelindx = 2
-                labelindy = 3
-            if (slicex or slicey):
-                plt.title(image.colorlabel+' at '+slicetext)
-                plt.ylabel(image.colorlabel)
-                plt.xlabel(labels[labelindx])
-            else:
-                plt.title(image.title)
-                plt.xlabel(labels[labelindx])
-                plt.ylabel(labels[labelindy])
-                ibar = plt.colorbar()
-                ibar.set_label(image.colorlabel)
-        
-        else:
-            plt.xlabel('Wavenumber l')
-            plt.ylabel('Frequency (mHz)')
-            plt.xticks(image.xticksmin, image.xticksmax)
-            plt.yticks(image.yticksmin, image.yticksmax)
-            plt.contourf(image.data1, image.data2, image.data3, 100)
-    
-        if (minx and maxx):
-            minx = int(minx)
-            maxx = int(maxx)
-            plt.xlim(minx,maxx)
-        if (miny and maxy):
-            miny = int(miny)
-            maxy = int(maxy)
-            plt.ylim(maxy,miny)
-        
-        if image.dim == 1:
-            text = 'Showing: ' + image.title
-        else:
-            text = "Showing: "+image.title+'. Size: '+image.dimensions
-        
-        if keep:
-            sliceFrame.statusBar.statusbar.config(text = text)
-            sliceWindow.deiconify()
-        else:
-            self.mainCanvas.f.canvas.draw()
-            self.statusBar.statusbar.config(text = text)
-        
-        self.plotTools.clearEntries()
-        self.sliceMenu.clearEntries()
-    
-    def animation(self):
-        keep = self.sliceMenu.keep.get()
         try:
-            aniWindow = tk.Toplevel()
-            aniWindow.withdraw()
-            
-            aniFrame = Window(aniWindow)
-            aniFrame.pack()
+            if keep:
+                sliceWindow = tk.Toplevel()
+                sliceWindow.withdraw()
+                
+                sliceFrame = Window(sliceWindow)
+                sliceFrame.pack(fill=tk.BOTH, expand=True)
+            else:
+                self.mainCanvas.f.clear()
+                plt.figure(1)
             
             index = Data.dataopts[self.optionMenu.choice.get()]
             minx = self.plotTools.minrangex.get()
@@ -619,6 +473,165 @@ class Helioseismology(tk.Tk):
             textx = str(slicex)
             texty = str(slicey)
             textt = str(slicet)
+            
+            image = Data.files[index]
+            
+            labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
+            labelindx = None
+            labelindy = None
+            
+            if (minz and maxz):
+                minz = int(minz)
+                maxz = int(maxz)
+            else:
+                minz = None
+                maxz = None
+            
+            if image.dim == 3:
+                sizet = np.arange(image.shape[0])
+                sizey = np.arange(image.shape[1])
+                sizex = np.arange(image.shape[2])
+                if slicex:
+                    slicex = int(slicex)
+                    if slicey:
+                        slicey = int(slicey)
+                        labelindx = 1
+                        slicetext = 'x = '+textx+' and y = '+texty
+                        data = image.imgdata[:,slicey,slicex]
+                        plt.plot(sizet,data,lw=0.5,color='black')
+                    elif slicet:
+                        slicet = int(slicet)
+                        labelindx = 3
+                        slicetext = 't = '+textt+' and x = '+textx
+                        data = image.imgdata[slicet,:,slicex]
+                        plt.plot(sizey,data,lw=0.5,color='black')
+                    else:
+                        labelindx = 1
+                        labelindy = 3
+                        slicetext = 'x = '+textx
+                        data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
+                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                elif slicey:
+                    slicey = int(slicey)
+                    if slicet:
+                        slicet = int(slicet)
+                        labelindx = 2
+                        slicetext = 't = '+textt+' and y = '+texty
+                        data = image.imgdata[slicet,slicey,:]
+                        plt.plot(sizex,data,lw=0.5,color='black')
+                    else:
+                        labelindx = 2
+                        labelindy = 1
+                        slicetext = 'y = '+texty
+                        data = image.imgdata[:,slicey,:]
+                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz,origin = 'lower')
+                elif slicet:
+                    slicet = int(slicet)
+                    labelindx = 2
+                    labelindy = 3
+                    slicetext = 't = '+textt
+                    data = image.imgdata[slicet,...]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                else:
+                    data = image.imgdata[0]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                    labelindx = 2
+                    labelindy = 3
+                    slicetext = 't = 0'
+                
+                if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
+                    plt.title(labels[0]+' vs '+labels[labelindx]+' at '+slicetext)
+                    plt.ylabel(labels[0])
+                    plt.xlabel(labels[labelindx])
+                else:
+                    plt.title('Slice of '+image.title+' at '+slicetext)
+                    plt.xlabel(labels[labelindx])
+                    plt.ylabel(labels[labelindy])
+                    ibar = plt.colorbar()
+                    ibar.set_label(image.colorlabel)
+            
+            elif image.dim == 2:
+                sizey = np.arange(image.shape[0])
+                sizex = np.arange(image.shape[1])
+                if slicex:
+                    slicex=int(slicex)
+                    plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
+                    labelindx = 3
+                    slicetext = 'x ='+textx
+                elif slicey:
+                    slicey=int(slicey)
+                    plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
+                    labelindx = 2
+                    slicetext = 'y ='+texty
+                else:
+                    plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
+                    labelindx = 2
+                    labelindy = 3
+                if (slicex or slicey):
+                    plt.title(image.colorlabel+' at '+slicetext)
+                    plt.ylabel(image.colorlabel)
+                    plt.xlabel(labels[labelindx])
+                else:
+                    plt.title(image.title)
+                    plt.xlabel(labels[labelindx])
+                    plt.ylabel(labels[labelindy])
+                    ibar = plt.colorbar()
+                    ibar.set_label(image.colorlabel)
+            
+            else:
+                plt.xlabel('Wavenumber l')
+                plt.ylabel('Frequency (mHz)')
+                plt.xticks(image.xticksmin, image.xticksmax)
+                plt.yticks(image.yticksmin, image.yticksmax)
+                plt.contourf(image.data1, image.data2, image.data3, 100)
+        
+            if (minx and maxx):
+                minx = int(minx)
+                maxx = int(maxx)
+                plt.xlim(minx,maxx)
+            if (miny and maxy):
+                miny = int(miny)
+                maxy = int(maxy)
+                plt.ylim(maxy,miny)
+            
+            if image.dim == 1:
+                text = 'Showing: ' + image.title
+            else:
+                text = "Showing: "+image.title+'. Size: '+image.dimensions
+            
+            if keep:
+                sliceFrame.statusBar.statusbar.config(text = text)
+                sliceWindow.deiconify()
+            else:
+                self.mainCanvas.f.canvas.draw()
+                self.statusBar.statusbar.config(text = text)
+            
+            self.plotTools.clearEntries()
+            self.sliceMenu.clearEntries()
+        
+        except:
+            self.statusBar.statusbar.config(text = 'Select a dataset.')
+    
+    def animation(self):
+        keep = self.sliceMenu.keep.get()
+        try:
+            aniWindow = tk.Toplevel()
+            aniWindow.withdraw()
+            
+            aniFrame = Window(aniWindow)
+            aniFrame.pack(fill=tk.BOTH, expand=True)
+            
+            index = Data.dataopts[self.optionMenu.choice.get()]
+            minx = self.plotTools.minrangex.get()
+            maxx = self.plotTools.maxrangex.get()
+            miny = self.plotTools.minrangey.get()
+            maxy = self.plotTools.maxrangey.get()
+            minz = self.plotTools.minrangez.get()
+            maxz = self.plotTools.maxrangez.get()
+            
+            labels = ('Time (s)','X-Pix','Y-Pix')
+            labelindx = None
+            labelindy = None
             
             aniaxis = int(self.animationMenu.aniaxis.get())
             image = Data.files[index]
@@ -637,17 +650,26 @@ class Helioseismology(tk.Tk):
             
             ims = []
             if aniaxis == 0:
+                anitext = 't'
+                labelindx = 1
+                labelindy = 2
                 for i in range(length):
                     im = plt.imshow(image.imgdata[i], cmap = 'gray', vmin=minz, vmax=maxz)
                     ims.append([im])
             elif aniaxis == 2:
+                anitext = 'X'
+                labelindx = 0
+                labelindy = 2
                 for i in range(length):
                     data = ndimage.rotate(image.imgdata[:,i,:], 270)
                     im = plt.imshow(data, cmap = 'gray', vmin=minz, vmax=maxz)
                     ims.append([im])
             elif aniaxis == 1:
+                anitext = 'Y'
+                labelindx = 1
+                labelindy = 0
                 for i in range(length):
-                    im = plt.imshow(image.imgdata[...,i], cmap = 'gray', vmin=minz, vmax=maxz)
+                    im = plt.imshow(image.imgdata[...,i], cmap = 'gray', vmin=minz, vmax=maxz, origin = 'lower')
                     ims.append([im])
             
             if (minx and maxx):
@@ -659,13 +681,19 @@ class Helioseismology(tk.Tk):
                 maxy = int(maxy)
                 plt.ylim(maxy,miny)
             
+            plt.title('Animation of '+image.title+' through '+anitext+'-Axis')
+            plt.xlabel(labels[labelindx])
+            plt.ylabel(labels[labelindy])
+            ibar = plt.colorbar()
+            ibar.set_label(image.colorlabel)
+            
             aniWindow.deiconify()
             self.plotTools.clearEntries()
             
             ani = animation.ArtistAnimation(aniFrame.canvas.f,ims, interval = speed)
             ani._start()
         except:
-            self.statusBar.statusbar.config(text="Can't animate this data set!")
+            self.statusBar.statusbar.config(text="Can't animate this dataset!")
             aniWindow.destroy()
     
     def plot(self):
@@ -719,28 +747,34 @@ class Helioseismology(tk.Tk):
             self.plotTools.clearEntries()
             
         except Exception:
-            self.statusBar.statusbar.config(text="Can't plot these data sets! Differente sizes.")
+            self.statusBar.statusbar.config(text="Can't plot these datasets! Differente sizes.")
             plotWindow.destroy()
     
     def imgaverage(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
-        average = (Data.files[index].imgdata[0] + Data.files[index].imgdata[2])/2
-        title = Data.files[index].title + ' Average'
-        color = Data.files[index].color
-        colorlabel = Data.files[index].colorlabel
-        shortname = 'avg'+Data.files[index].shortname
-        dimensions = Data.files[index].dimensions
-        Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
+        if Data.files[index].dim == 3:
+            average = (Data.files[index].imgdata[0] + Data.files[index].imgdata[2])/2
+            title = Data.files[index].title + ' Average'
+            color = Data.files[index].color
+            colorlabel = Data.files[index].colorlabel
+            shortname = 'avg'+Data.files[index].shortname
+            dimensions = Data.files[index].dimensions
+            Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
+        else:
+            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
     
     def imgdifference(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
-        difference = Data.files[index].imgdata[2] - Data.files[index].imgdata[1]
-        title = Data.files[index].title + ' Difference'
-        color = Data.files[index].color
-        colorlabel = Data.files[index].colorlabel
-        shortname = 'dif'+Data.files[index].shortname
-        dimensions = Data.files[index].dimensions
-        Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
+        if Data.files[index].dim == 3:
+            difference = Data.files[index].imgdata[2] - Data.files[index].imgdata[1]
+            title = Data.files[index].title + ' Difference'
+            color = Data.files[index].color
+            colorlabel = Data.files[index].colorlabel
+            shortname = 'dif'+Data.files[index].shortname
+            dimensions = Data.files[index].dimensions
+            Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
+        else:
+            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
     
     def powerspectra(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -797,7 +831,7 @@ class Helioseismology(tk.Tk):
             Data.add(PowerSpectra(M,N,A,title,ratio_x,ratio_y))
             
         except:
-            self.statusBar.statusbar.config(text="Can't calculate power spectrum! Wrong data set.")
+            self.statusBar.statusbar.config(text="Can't calculate power spectrum! Wrong dataset.")
     
     def compute(self):
         avg = self.computationMenu.imgavg.get()
