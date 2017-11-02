@@ -110,26 +110,29 @@ class OptionMenu(tk.LabelFrame):
         self.choice.set('(Select a data set)')
         
         self.menu = tk.OptionMenu(self,self.choice,*Data.options)
-        self.menu.grid(row = 0)
+        self.menu.grid(row = 0, pady = 5)
         self.menu.configure(width = 15)
         
         tabs = tk.Frame(self)
-        tabs.grid(row = 1)
+        tabs.grid(row = 1, sticky = tk.E+tk.W)
         
-        self.showPT = tk.Label(tabs, text = 'Range', relief = tk.RAISED, width = 8)
+        tabs.columnconfigure(0, weight = 1)
+        tabs.columnconfigure(1, weight = 1)
+        
+        self.showPT = tk.Label(tabs, text = 'Range', relief = tk.RAISED, width = 7)
         self.showPT.grid(row = 0, column = 0)
         
-        self.showSlM = tk.Label(tabs, text = 'Slice', relief = tk.RAISED, width = 8)
-        self.showSlM.grid(row = 1, column = 0)
+        self.showSlM = tk.Label(tabs, text = 'Slice', relief = tk.RAISED, width = 7)
+        self.showSlM.grid(row = 0, column = 1)
         
-        self.showScM = tk.Label(tabs, text = 'Scatter', relief = tk.RAISED, width = 8)
+        self.showScM = tk.Label(tabs, text = 'Scatter', relief = tk.RAISED, width = 7)
         self.showScM.grid(row = 1, column = 1)
         
-        self.showAM = tk.Label(tabs, text = 'Animate', relief = tk.RAISED, width = 8)
-        self.showAM.grid(row = 1, column = 2)
+        self.showAM = tk.Label(tabs, text = 'Animate', relief = tk.RAISED, width = 7)
+        self.showAM.grid(row = 2, column = 1)
         
-        self.showCM = tk.Label(tabs, text = 'Compute', relief = tk.RAISED, width = 8)
-        self.showCM.grid(row = 0, column = 1)
+        self.showCM = tk.Label(tabs, text = 'Compute', relief = tk.RAISED, width = 7)
+        self.showCM.grid(row = 1, column = 0)
         
     def updateMenu(self):
         
@@ -148,7 +151,7 @@ class PlotTools(tk.LabelFrame):
         minlabel = tk.Label(self,text = 'Min')
         minlabel.grid(row=0,column=1)
         maxlabel = tk.Label(self, text = 'Max')
-        maxlabel.grid(row=0,column = 2)
+        maxlabel.grid(row=0,column = 2)      
         
         #This label simply marks X as to identify its corresponding entry boxes
         xtools = tk.Label(self,text='X')
@@ -197,7 +200,7 @@ class SliceMenu(tk.LabelFrame):
         tk.LabelFrame.__init__(self,parent,text='Slice Plots')
         
         sliceentries = tk.Frame(self)
-        sliceentries.grid(row=1)
+        sliceentries.grid(row=0)
         
         xslicelabel = tk.Label(sliceentries,text='X')
         xslicelabel.grid(row=0,column=0,padx=5)
@@ -277,11 +280,42 @@ class AnimationMenu(tk.LabelFrame):
         
         tk.LabelFrame.__init__(self,parent,text = 'Animate')
         
+        frame1 = tk.Frame(self)
+        frame1.grid(row = 1, column = 0)
+        
+        fpstext = tk.Label(frame1, text = 'FPS')
+        fpstext.grid(row = 0, column = 0, sticky = tk.S)
+        
+        self.fps = tk.Entry(frame1,width = 3)
+        self.fps.insert(tk.END,'5')
+        self.fps.grid(row = 1, column = 0)
+        
+        axistest = tk.Label(self, text = 'Animation Axis')
+        axistest.grid(row = 0, column = 1)
+        
+        frame2 = tk.Frame(self)
+        frame2.grid(row = 1, column = 1)
+        
+        self.aniaxis = tk.IntVar()
+        
+        tani = tk.Radiobutton(frame2, text = 't-Axis', variable = self.aniaxis, value = 0)
+        xani = tk.Radiobutton(frame2, text = 'X-Axis', variable = self.aniaxis, value = 2)
+        yani = tk.Radiobutton(frame2, text = 'Y-Axis', variable = self.aniaxis, value = 1)
+        tani.grid(row = 0)
+        xani.grid(row = 1)
+        yani.grid(row = 2)
+        
         animateoption = tk.Button(self, text='Animate',command=command)
-        animateoption.grid(row=0)
+        animateoption.grid(row=2,columnspan = 2)
+        
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 1)
+        self.rowconfigure(0, weight = 1)
+        self.rowconfigure(1, weight = 1)
+        self.rowconfigure(2, weight = 1)
 
 class ComputationMenu(tk.LabelFrame):
-    
+    4
     def __init__(self,parent,command):
         
         tk.LabelFrame.__init__(self,parent,text = 'Generate')
@@ -369,27 +403,27 @@ class Helioseismology(tk.Tk):
         self.optionMenu = OptionMenu(sideMenu)
         self.optionMenu.grid(row = 0, sticky = tk.E+tk.W)
         
+        self.computationMenu = ComputationMenu(sideMenu,self.compute)
+        self.computationMenu.grid(row = 1, sticky = tk.E+tk.W, ipady = 3)
+        self.computationMenu.grid_remove()
+        
         self.plotTools = PlotTools(sideMenu)
-        self.plotTools.grid(row = 1, sticky = tk.E+tk.W, ipady = 3)
+        self.plotTools.grid(row = 2, sticky = tk.E+tk.W, ipady = 3)
         self.plotTools.grid_remove()
         
         self.sliceMenu = SliceMenu(sideMenu,self.viewslice)
-        self.sliceMenu.grid(row = 2, sticky = tk.E+tk.W, ipady = 3)
-        self.sliceMenu.grid_remove()
+        self.sliceMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
+        #self.sliceMenu.grid_remove()
         
         self.scatterMenu = ScatterMenu(sideMenu,self.plot)
-        self.scatterMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
+        self.scatterMenu.grid(row = 4, sticky = tk.E+tk.W, ipady = 3)
         self.scatterMenu.grid_remove()
         
         self.animationMenu = AnimationMenu(sideMenu,self.animation)
-        self.animationMenu.grid(row = 4, sticky = tk.E+tk.W, ipady = 3)
+        self.animationMenu.grid(row = 5, sticky = tk.E+tk.W, ipady = 3)
         self.animationMenu.grid_remove()
         
-        self.computationMenu = ComputationMenu(sideMenu,self.compute)
-        self.computationMenu.grid(row = 5, sticky = tk.E+tk.W, ipady = 3)
-        self.computationMenu.grid_remove()
-        
-        
+        self.optionMenu.showSlM.config(relief = tk.SUNKEN)
         self.optionMenu.showPT.bind('<Button-1>',self.showPT)
         self.optionMenu.showSlM.bind('<Button-1>',self.showSlM)
         self.optionMenu.showScM.bind('<Button-1>',self.showScM)
@@ -399,10 +433,7 @@ class Helioseismology(tk.Tk):
         self.columnconfigure(0, weight = 10)
         self.rowconfigure(1, weight = 10)
         self.PT = False
-        self.SlM = False
-        self.ScM = False
         self.CM = False
-        self.AM = False
 
     def viewslice(self):
         keep = self.sliceMenu.keep.get()
@@ -568,35 +599,74 @@ class Helioseismology(tk.Tk):
     
     def animation(self):
         keep = self.sliceMenu.keep.get()
-        
-        aniWindow = tk.Toplevel()
-        
-        aniFrame = Window(aniWindow)
-        aniFrame.pack()
-        
-        index = Data.dataopts[self.optionMenu.choice.get()]
-        minx = self.plotTools.minrangex.get()
-        maxx = self.plotTools.maxrangex.get()
-        miny = self.plotTools.minrangey.get()
-        maxy = self.plotTools.maxrangey.get()
-        minz = self.plotTools.minrangez.get()
-        maxz = self.plotTools.maxrangez.get()
-        slicex = self.sliceMenu.xslice.get()
-        slicey = self.sliceMenu.yslice.get()
-        slicet = self.sliceMenu.tslice.get()
-        textx = str(slicex)
-        texty = str(slicey)
-        textt = str(slicet)
-        image = Data.files[index]
-        
-        ims = []
-        for i in range(512):
-            im = plt.imshow(image.imgdata[i], cmap = 'gray')
-            ims.append([im])
-        
-        ani = animation.ArtistAnimation(aniFrame.canvas.f,ims)#,interval=100, blit=True, repeat_delay=1000)
-        
-        ani._start()
+        try:
+            aniWindow = tk.Toplevel()
+            aniWindow.withdraw()
+            
+            aniFrame = Window(aniWindow)
+            aniFrame.pack()
+            
+            index = Data.dataopts[self.optionMenu.choice.get()]
+            minx = self.plotTools.minrangex.get()
+            maxx = self.plotTools.maxrangex.get()
+            miny = self.plotTools.minrangey.get()
+            maxy = self.plotTools.maxrangey.get()
+            minz = self.plotTools.minrangez.get()
+            maxz = self.plotTools.maxrangez.get()
+            slicex = self.sliceMenu.xslice.get()
+            slicey = self.sliceMenu.yslice.get()
+            slicet = self.sliceMenu.tslice.get()
+            textx = str(slicex)
+            texty = str(slicey)
+            textt = str(slicet)
+            
+            aniaxis = int(self.animationMenu.aniaxis.get())
+            image = Data.files[index]
+            length = image.shape[aniaxis]
+            try:
+                speed = 1000/(int(self.animationMenu.fps.get()))
+            except:
+                self.statusBar.statusbar.config(text = 'Error! FPS must be an integer')
+            
+            if (minz and maxz):
+                minz = int(minz)
+                maxz = int(maxz)
+            else:
+                minz = None
+                maxz = None
+            
+            ims = []
+            if aniaxis == 0:
+                for i in range(length):
+                    im = plt.imshow(image.imgdata[i], cmap = 'gray', vmin=minz, vmax=maxz)
+                    ims.append([im])
+            elif aniaxis == 2:
+                for i in range(length):
+                    data = ndimage.rotate(image.imgdata[:,i,:], 270)
+                    im = plt.imshow(data, cmap = 'gray', vmin=minz, vmax=maxz)
+                    ims.append([im])
+            elif aniaxis == 1:
+                for i in range(length):
+                    im = plt.imshow(image.imgdata[...,i], cmap = 'gray', vmin=minz, vmax=maxz)
+                    ims.append([im])
+            
+            if (minx and maxx):
+                minx = int(minx)
+                maxx = int(maxx)
+                plt.xlim(minx,maxx)
+            if (miny and maxy):
+                miny = int(miny)
+                maxy = int(maxy)
+                plt.ylim(maxy,miny)
+            
+            aniWindow.deiconify()
+            self.plotTools.clearEntries()
+            
+            ani = animation.ArtistAnimation(aniFrame.canvas.f,ims, interval = speed)
+            ani._start()
+        except:
+            self.statusBar.statusbar.config(text="Can't animate this data set!")
+            aniWindow.destroy()
     
     def plot(self):
         keep = self.scatterMenu.keep.get()
@@ -755,24 +825,21 @@ class Helioseismology(tk.Tk):
             self.plotTools.grid_remove()            
     
     def showSlM(self,event):
-        if not self.SlM:
-            self.SlM = True
-            self.optionMenu.showSlM.config(relief = tk.SUNKEN)
-            self.sliceMenu.grid()
-        else:
-            self.SlM = False
-            self.optionMenu.showSlM.config(relief = tk.RAISED)
-            self.sliceMenu.grid_remove() 
+        self.optionMenu.showSlM.config(relief = tk.SUNKEN)
+        self.optionMenu.showScM.config(relief = tk.RAISED)
+        self.optionMenu.showAM.config(relief = tk.RAISED)
+        self.sliceMenu.grid()
+        self.scatterMenu.grid_remove() 
+        self.animationMenu.grid_remove()
+            
     
     def showScM(self,event):
-        if not self.ScM:
-            self.ScM = True
-            self.optionMenu.showScM.config(relief = tk.SUNKEN)
-            self.scatterMenu.grid()
-        else:
-            self.ScM = False
-            self.optionMenu.showScM.config(relief = tk.RAISED)
-            self.scatterMenu.grid_remove() 
+        self.optionMenu.showSlM.config(relief = tk.RAISED)
+        self.optionMenu.showScM.config(relief = tk.SUNKEN)
+        self.optionMenu.showAM.config(relief = tk.RAISED)
+        self.sliceMenu.grid_remove()
+        self.scatterMenu.grid() 
+        self.animationMenu.grid_remove()
     
     def showCM(self,event):
         if not self.CM:
@@ -785,14 +852,12 @@ class Helioseismology(tk.Tk):
             self.computationMenu.grid_remove() 
     
     def showAM(self,event):
-        if not self.AM:
-            self.AM = True
-            self.optionMenu.showAM.config(relief = tk.SUNKEN)
-            self.animationMenu.grid()
-        else:
-            self.AM = False
-            self.optionMenu.showAM.config(relief = tk.RAISED)
-            self.animationMenu.grid_remove() 
+        self.optionMenu.showSlM.config(relief = tk.RAISED)
+        self.optionMenu.showScM.config(relief = tk.RAISED)
+        self.optionMenu.showAM.config(relief = tk.SUNKEN)
+        self.sliceMenu.grid_remove()
+        self.scatterMenu.grid_remove() 
+        self.animationMenu.grid()
     
 app = Helioseismology()
 app.mainloop()
