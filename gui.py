@@ -18,13 +18,12 @@ import numpy as np
 from scipy import ndimage
 from pylab import find
 
-'''Notes to self:
--Add Computation Menu and Computations
--Make pretty (add padding again!)
--Fix that damn hidden exception in the plot function
--Check w/e else
-'''
+from PIL import Image, ImageTk
 
+'''Notes to self:
+-I think we're good
+'''
+#overplotting (maybe?)
 
 #------------------------------------------------------------------------------#
 
@@ -49,7 +48,7 @@ class FitsImage(object): #Allows creating of plots with data from fits files
         self.shape = np.shape(self.imgdata)
         self.dim = len(self.shape)
 
-class PowerSpectra(object):
+class PowerSpectraAvg(object):
     
     def __init__(self,data1,data2,data3,title,ratio_x,ratio_y):
         self.data1 = data1
@@ -97,7 +96,7 @@ class StatusBar(tk.Frame):
         
         text = 'Welcome to the Helioseismology Tutorial. Select data and have fun plotting!'
         
-        self.statusbar = tk.Label(self,text=text,relief=tk.SUNKEN,bg='white',width=60,anchor='w')
+        self.statusbar = tk.Label(self,text=text,relief=tk.SUNKEN,bg='white',width=80,anchor='w')
         self.statusbar.grid(row=0)
 
 class OptionMenu(tk.LabelFrame):
@@ -241,8 +240,10 @@ class ScatterMenu(tk.LabelFrame):
         tk.LabelFrame.__init__(self,parent,text='Scatter Plots')
         
         #Choose data set to be used for the x-axis
-        xaxis = tk.Label(self,text='X-Axis')
+        xaxis = tk.Label(self, text='X-Axis')
         xaxis.grid(row = 0)
+        self.choice = tk.Label(self, relief = tk.SUNKEN, text = '(Select a data set)', width = 20)
+        self.choice.grid(row = 1)
         #self.datax = tk.StringVar()
         #self.datax.set('')
         #self.plotx = tk.OptionMenu(self,self.datax,*Data.options)
@@ -315,7 +316,7 @@ class AnimationMenu(tk.LabelFrame):
         self.rowconfigure(2, weight = 1)
 
 class ComputationMenu(tk.LabelFrame):
-    4
+    
     def __init__(self,parent,command):
         
         tk.LabelFrame.__init__(self,parent,text = 'Generate')
@@ -342,15 +343,30 @@ class ComputationMenu(tk.LabelFrame):
         #imgdifopt = tk.Button(avgdif, text = 'Difference', command=imgdifference)
         imgdifopt.grid(row=0,column=1)
         
+        temporallabel = tk.Label(self,text = 'Temporal')
+        temporallabel.grid(row = 2)
+        
+        temporal = tk.Frame(self)
+        temporal.grid(row = 3)
+        
+        self.tempavg = tk.BooleanVar()#
+        tempavgopt = tk.Checkbutton(temporal, text = 'Average', variable = self.tempavg)
+        #powerspectraopt = tk.Button(self, text='Power Spectra', command=powerspectra)
+        tempavgopt.grid(row = 0, column = 0)
+        
+        self.tempdiff = tk.BooleanVar()
+        tempdiffopt = tk.Checkbutton(temporal, text = 'Difference', variable = self.tempdiff)
+        tempdiffopt.grid(row = 0, column = 1)
+        
         #Checkbutton that allows the user to generate a power spectra of a data set.
         self.ps = tk.BooleanVar()#
         powerspectraopt = tk.Checkbutton(self, text = 'Power Spectra',variable=self.ps)
         #powerspectraopt = tk.Button(self, text='Power Spectra', command=powerspectra)
-        powerspectraopt.grid(row = 2)
+        powerspectraopt.grid(row = 4)
         
         #Button that allows the user to compute the selected computations.
         computebutton = tk.Button(self, text='Compute', command=command)
-        computebutton.grid(row = 3)
+        computebutton.grid(row = 5)
 
 class PlotCanvas(tk.Frame):
     
@@ -381,18 +397,6 @@ class Window(tk.Frame): #fix this
         self.canvas = PlotCanvas(self)
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-class Image(tk.Frame):
-    
-    def __init__(self,parent,filedirectory):
-        
-        tk.Frame.__init__(self,parent)
-        
-        self.img = tk.PhotoImage(file = filedirectory)
-        
-        self.image = tk.Label(image = self.img)
-        self.image.image = self.img
-        self.image.grid()
-
 #---Main App---#
 
 class Helioseismology(tk.Tk):
@@ -404,7 +408,7 @@ class Helioseismology(tk.Tk):
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
         
         self.statusBar = StatusBar(self)
-        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W)
+        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W+tk.S+tk.N, pady = 3, padx = 2)
         
         self.mainCanvas = PlotCanvas(self)
         self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 2, sticky = tk.W+tk.E+tk.N+tk.S)
@@ -446,6 +450,24 @@ class Helioseismology(tk.Tk):
         self.rowconfigure(1, weight = 10)
         self.PT = False
         self.CM = False
+        self.optionMenu.choice.trace('w', self.xScatterChange)
+        
+        nsf = Image.open('nsf1.gif')
+        nsf = nsf.resize((96, 96))
+        self.nsf = ImageTk.PhotoImage(nsf)
+        nsflogo = tk.Label(sideMenu,image = self.nsf)
+        nsflogo.grid(row=6,sticky=tk.S)
+        
+        nmsupng = Image.open('NM_State_logo.png')
+        nmsupng = nmsupng.resize((96, 96))
+        self.nmsu = ImageTk.PhotoImage(nmsupng)
+        nmsulogo = tk.Label(sideMenu,image = self.nmsu)
+        nmsulogo.grid(row=7,stick=tk.S)
+        
+        self.aspect(1,1,1,1)
+        #self.attributes('-zoomed', True)
+        #self.minsize(0,800)
+        #self.iconbitmap('icon.ico')
 
     def viewslice(self):
         keep = self.sliceMenu.keep.get()
@@ -579,7 +601,8 @@ class Helioseismology(tk.Tk):
                     ibar.set_label(image.colorlabel)
             
             else:
-                plt.xlabel('Wavenumber l')
+                plt.title(image.title)
+                plt.xlabel('Wavenumber (l)')
                 plt.ylabel('Frequency (mHz)')
                 plt.xticks(image.xticksmin, image.xticksmax)
                 plt.yticks(image.yticksmin, image.yticksmax)
@@ -611,6 +634,8 @@ class Helioseismology(tk.Tk):
         
         except:
             self.statusBar.statusbar.config(text = 'Select a dataset.')
+            if keep:
+                sliceWindow.destroy()
     
     def animation(self):
         keep = self.sliceMenu.keep.get()
@@ -648,29 +673,22 @@ class Helioseismology(tk.Tk):
                 minz = None
                 maxz = None
             
-            ims = []
             if aniaxis == 0:
                 anitext = 't'
                 labelindx = 1
                 labelindy = 2
-                for i in range(length):
-                    im = plt.imshow(image.imgdata[i], cmap = 'gray', vmin=minz, vmax=maxz)
-                    ims.append([im])
+                im = plt.imshow(image.imgdata[0], cmap = image.color, vmin=minz, vmax=maxz)
             elif aniaxis == 2:
                 anitext = 'X'
                 labelindx = 0
                 labelindy = 2
-                for i in range(length):
-                    data = ndimage.rotate(image.imgdata[:,i,:], 270)
-                    im = plt.imshow(data, cmap = 'gray', vmin=minz, vmax=maxz)
-                    ims.append([im])
+                data = ndimage.rotate(image.imgdata[:,0,:], 270)
+                im = plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
             elif aniaxis == 1:
                 anitext = 'Y'
                 labelindx = 1
                 labelindy = 0
-                for i in range(length):
-                    im = plt.imshow(image.imgdata[...,i], cmap = 'gray', vmin=minz, vmax=maxz, origin = 'lower')
-                    ims.append([im])
+                im = plt.imshow(image.imgdata[...,0], cmap = image.color, vmin=minz, vmax=maxz, origin = 'lower')
             
             if (minx and maxx):
                 minx = int(minx)
@@ -681,16 +699,36 @@ class Helioseismology(tk.Tk):
                 maxy = int(maxy)
                 plt.ylim(maxy,miny)
             
-            plt.title('Animation of '+image.title+' through '+anitext+'-Axis')
+            title = plt.title('Animation of '+image.title+' through '+anitext+'-Axis')
             plt.xlabel(labels[labelindx])
             plt.ylabel(labels[labelindy])
             ibar = plt.colorbar()
             ibar.set_label(image.colorlabel)
             
+            def ani(i):
+                frame = i + 1
+                if aniaxis == 0:
+                    im.set_array(image.imgdata[i])
+                    title.set_text('Time Animation, t = '+str(frame))
+                    return [im]
+                    return title
+                if aniaxis == 2:
+                    d = ndimage.rotate(image.imgdata[:,i,:], 270)
+                    im.set_array(d)
+                    title.set_text('X-Axis Animation, x = '+str(frame))
+                    return [im]
+                    return title
+                if aniaxis == 1:
+                    im.set_array(image.imgdata[...,i])
+                    title.set_text('Y-Axis Animation, y = '+str(frame))
+                    return [im]
+                    return title
+            
+            aniFrame.statusBar.statusbar.config(text = 'Animation of '+image.title+' through '+anitext+'-Axis')
             aniWindow.deiconify()
             self.plotTools.clearEntries()
             
-            ani = animation.ArtistAnimation(aniFrame.canvas.f,ims, interval = speed)
+            ani = animation.FuncAnimation(aniFrame.canvas.f,ani,frames=range(length),interval = speed)
             ani._start()
         except:
             self.statusBar.statusbar.config(text="Can't animate this dataset!")
@@ -748,7 +786,8 @@ class Helioseismology(tk.Tk):
             
         except Exception:
             self.statusBar.statusbar.config(text="Can't plot these datasets! Differente sizes.")
-            plotWindow.destroy()
+            if keep:
+                plotWindow.destroy()
     
     def imgaverage(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -776,12 +815,48 @@ class Helioseismology(tk.Tk):
         else:
             self.statusBar.statusbar.config(text="Can't compute with this dataset!")
     
+    def temporalavg(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        if Data.files[index].dim == 3:
+            tempavg = np.mean(Data.files[index].imgdata,axis=0)
+            title = Data.files[index].title + ' Temp. Average'
+            color = Data.files[index].color
+            colorlabel = Data.files[index].colorlabel
+            shortname = 'tempavg'+Data.files[index].shortname
+            dimensions = Data.files[index].dimensions
+            Data.add(FitsImage(tempavg,title,color,colorlabel,shortname,dimensions))
+        else:
+            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+    
+    def temporaldiff(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        if Data.files[index].dim == 3:
+            tempavg = np.mean(Data.files[index].imgdata,axis=0)
+            length = Data.files[index].shape[0]
+            tempdiff = []
+            for i in range(length):
+                td = Data.files[index].imgdata[i] -tempavg
+                tempdiff.append(td)
+            title = Data.files[index].title + ' Temp. Difference'
+            color = Data.files[index].color
+            colorlabel = Data.files[index].colorlabel
+            shortname = 'tempdiff'+Data.files[index].shortname
+            dimensions = Data.files[index].dimensions
+            Data.add(FitsImage(tempdiff,title,color,colorlabel,shortname,dimensions))
+        else:
+            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+    
     def powerspectra(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
         try:
             ofrq1 = np.fft.fftn(Data.files[index].imgdata)
             frq1 = np.fft.fftshift(ofrq1)
             power = np.log(np.abs(frq1**2))
+            
+            title = Data.files[index].title + ' Power Spectra'
+            
+            #PS ends here. 3D
+            Data.add(FitsImage(power,title,None,'idk',title+'power','(128x128x512)'))
             
             begin_time = 0
             begin_space = 0
@@ -826,16 +901,18 @@ class Helioseismology(tk.Tk):
             frq = v*1000 # in unit of mHz
             ratio_y = frq/256
             
-            title = Data.files[index].title + ' Power Spectra'
+            title = title + ' Avg.'
             
-            Data.add(PowerSpectra(M,N,A,title,ratio_x,ratio_y))
-            
+            Data.add(PowerSpectraAvg(M,N,A,title,ratio_x,ratio_y)) #Power Spectrum Average
+                
         except:
             self.statusBar.statusbar.config(text="Can't calculate power spectrum! Wrong dataset.")
     
     def compute(self):
         avg = self.computationMenu.imgavg.get()
         dif = self.computationMenu.imgdif.get()
+        tempavg = self.computationMenu.tempavg.get()
+        tempdiff = self.computationMenu.tempdiff.get()
         ps = self.computationMenu.ps.get()
         
         if avg:
@@ -844,9 +921,16 @@ class Helioseismology(tk.Tk):
             self.imgdifference()
         if ps:
             self.powerspectra()
+        if tempavg:
+            self.temporalavg()
+        if tempdiff:
+            self.temporaldiff()
         
         self.optionMenu.updateMenu()
         self.scatterMenu.updateMenu()
+    
+    def xScatterChange(self,*args):
+        self.scatterMenu.choice.config(text = self.optionMenu.choice.get())
     
     def showPT(self,event):
         if not self.PT:
@@ -865,7 +949,6 @@ class Helioseismology(tk.Tk):
         self.sliceMenu.grid()
         self.scatterMenu.grid_remove() 
         self.animationMenu.grid_remove()
-            
     
     def showScM(self,event):
         self.optionMenu.showSlM.config(relief = tk.RAISED)
