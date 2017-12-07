@@ -9,6 +9,7 @@ import matplotlib.ticker as mticker
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 from astropy.io import fits
 from astropy.visualization import astropy_mpl_style
@@ -385,7 +386,7 @@ class PlotCanvas(tk.Frame):
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-class Window(tk.Frame): #fix this
+class Window(tk.Frame):
     
     def __init__(self,parent):
         
@@ -396,6 +397,30 @@ class Window(tk.Frame): #fix this
         
         self.canvas = PlotCanvas(self)
         self.canvas.pack(fill=tk.BOTH, expand=True)
+
+class FileInfo(tk.LabelFrame):
+    
+    def __init__(self,parent):
+        
+        tk.LabelFrame.__init__(self,parent, text = 'File Info')
+        
+        self.name = 'Name: '
+        self.dim = 'Size: '
+        self.file = 'File: '
+        
+        self.namelabel = tk.Label(self, text = self.name, anchor = tk.W)
+        self.namelabel.grid(row = 0, sticky = tk.W)
+        
+        self.dimlabel = tk.Label(self, text = self.dim, anchor = tk.W)
+        self.dimlabel.grid(row = 1, sticky = tk.W)
+        
+        self.filelabel = tk. Label(self, text = self.file, anchor = tk.W)
+        self.filelabel.grid(row = 2, sticky = tk.W)
+    
+    def update(self,fitsimage):
+        self.namelabel.config(text = self.name + ' ' + fitsimage.title, justify = tk.LEFT)
+        self.dimlabel.config(text = self.dim + ' ' + fitsimage.dimensions, justify = tk.LEFT)
+        self.filelabel.config(text = self.file + ' ' + fitsimage.file, justify = tk.LEFT)
 
 #---Main App---#
 
@@ -411,7 +436,7 @@ class Helioseismology(tk.Tk):
         self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W+tk.S+tk.N, pady = 3, padx = 2)
         
         self.mainCanvas = PlotCanvas(self)
-        self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 2, sticky = tk.W+tk.E+tk.N+tk.S)
+        self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 7, sticky = tk.W+tk.E+tk.N+tk.S)
         
         sideMenu = tk.Frame()
         sideMenu.grid(row = 1, column = 3,sticky = tk.N+tk.S)
@@ -432,12 +457,15 @@ class Helioseismology(tk.Tk):
         #self.sliceMenu.grid_remove()
         
         self.scatterMenu = ScatterMenu(sideMenu,self.plot)
-        self.scatterMenu.grid(row = 4, sticky = tk.E+tk.W, ipady = 3)
+        self.scatterMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
         self.scatterMenu.grid_remove()
         
         self.animationMenu = AnimationMenu(sideMenu,self.animation)
-        self.animationMenu.grid(row = 5, sticky = tk.E+tk.W, ipady = 3)
+        self.animationMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
         self.animationMenu.grid_remove()
+        
+        self.fileInfo = FileInfo(sideMenu)
+        self.fileInfo.grid(row = 4, sticky = tk.E+tk.W, ipady = 3)
         
         self.optionMenu.showSlM.config(relief = tk.SUNKEN)
         self.optionMenu.showPT.bind('<Button-1>',self.showPT)
@@ -463,6 +491,8 @@ class Helioseismology(tk.Tk):
         self.nmsu = ImageTk.PhotoImage(nmsupng)
         nmsulogo = tk.Label(sideMenu,image = self.nmsu)
         nmsulogo.grid(row=7,stick=tk.S)
+        
+        
         
         self.aspect(1,1,1,1)
         #self.attributes('-zoomed', True)
@@ -631,9 +661,10 @@ class Helioseismology(tk.Tk):
             
             self.plotTools.clearEntries()
             self.sliceMenu.clearEntries()
+            self.fileInfo.update(image)
         
         except:
-            self.statusBar.statusbar.config(text = 'Select a dataset.')
+            messagebox.showerror('Error','Select a dataset.')
             if keep:
                 sliceWindow.destroy()
     
@@ -731,33 +762,34 @@ class Helioseismology(tk.Tk):
             ani = animation.FuncAnimation(aniFrame.canvas.f,ani,frames=range(length),interval = speed)
             ani._start()
         except:
-            self.statusBar.statusbar.config(text="Can't animate this dataset!")
+            messagebox.showerror('Error',"Can't animate this dataset.")
+            
             aniWindow.destroy()
     
     def plot(self):
         keep = self.scatterMenu.keep.get()
         
-        if keep:
-            plotWindow = tk.Toplevel()
-            plotWindow.withdraw()
-            
-            plotFrame = Window(plotWindow)
-            plotFrame.pack()
-        
-        else:
-            self.mainCanvas.f.clear()
-            plt.figure(1)
-        
-        index1 = Data.dataopts[self.optionMenu.choice.get()]
-        index2 = Data.dataopts[self.scatterMenu.datay.get()]
-        minx = self.plotTools.minrangex.get()
-        maxx = self.plotTools.maxrangex.get()
-        miny = self.plotTools.minrangey.get()
-        maxy = self.plotTools.maxrangey.get()
-        data1 = Data.files[index1]
-        data2 = Data.files[index2]
-        
         try:
+            if keep:
+                plotWindow = tk.Toplevel()
+                plotWindow.withdraw()
+                
+                plotFrame = Window(plotWindow)
+                plotFrame.pack()
+            
+            else:
+                self.mainCanvas.f.clear()
+                plt.figure(1)
+            
+            index1 = Data.dataopts[self.optionMenu.choice.get()]
+            index2 = Data.dataopts[self.scatterMenu.datay.get()]
+            minx = self.plotTools.minrangex.get()
+            maxx = self.plotTools.maxrangex.get()
+            miny = self.plotTools.minrangey.get()
+            maxy = self.plotTools.maxrangey.get()
+            data1 = Data.files[index1]
+            data2 = Data.files[index2]
+        
             if (data1.dim == 3) and (data2.dim == 3):
                 plt.plot(data1.imgdata[0],data2.imgdata[0],',',color='black')
             else:
@@ -785,7 +817,7 @@ class Helioseismology(tk.Tk):
             self.plotTools.clearEntries()
             
         except Exception:
-            self.statusBar.statusbar.config(text="Can't plot these datasets! Differente sizes.")
+            messagebox.showerror('Error',"Can't plot different sized datasets.")
             if keep:
                 plotWindow.destroy()
     
@@ -800,7 +832,7 @@ class Helioseismology(tk.Tk):
             dimensions = Data.files[index].dimensions
             Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
         else:
-            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+            messagebox.showerror('Error',"Can't compute with this dataset!")
     
     def imgdifference(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -813,7 +845,7 @@ class Helioseismology(tk.Tk):
             dimensions = Data.files[index].dimensions
             Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
         else:
-            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+            messagebox.showerror('Error',"Can't compute with this dataset!")
     
     def temporalavg(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -826,7 +858,7 @@ class Helioseismology(tk.Tk):
             dimensions = Data.files[index].dimensions
             Data.add(FitsImage(tempavg,title,color,colorlabel,shortname,dimensions))
         else:
-            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+            messagebox.showerror('Error',"Can't compute with this dataset!")
     
     def temporaldiff(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -844,7 +876,7 @@ class Helioseismology(tk.Tk):
             dimensions = Data.files[index].dimensions
             Data.add(FitsImage(tempdiff,title,color,colorlabel,shortname,dimensions))
         else:
-            self.statusBar.statusbar.config(text="Can't compute with this dataset!")
+            messagebox.showerror('Error',"Can't compute with this dataset!")
     
     def powerspectra(self):
         index = Data.dataopts[self.optionMenu.choice.get()]
@@ -906,7 +938,7 @@ class Helioseismology(tk.Tk):
             Data.add(PowerSpectraAvg(M,N,A,title,ratio_x,ratio_y)) #Power Spectrum Average
                 
         except:
-            self.statusBar.statusbar.config(text="Can't calculate power spectrum! Wrong dataset.")
+            messagebox.showerror('Error',"Can't calculate power spectrum! Wrong dataset.")
     
     def compute(self):
         avg = self.computationMenu.imgavg.get()
