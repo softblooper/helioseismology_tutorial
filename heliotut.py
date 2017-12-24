@@ -30,47 +30,50 @@ from PIL import Image, ImageTk
 
 #---Classes---#
 
-class FitsImage(object): #Allows creating of plots with data from fits files
+class FitsImage(object): # Allows creating of plots with data from fits files. Also used to manage datasets created from within the program, so name is a bit misleading.
     
-    #Initializes object, converts fits data into Python array. Detects shape for corresponding plot.
+    # Initializes object, converts fits data into Python array. Detects shape for corresponding plot.
+    
     def __init__(self,file,title,colorscale,colorlabel,shortname,dimensions):
-        self.file = file
-        self.title = title
-        self.color = colorscale
-        self.colorlabel = colorlabel
-        self.shortname = shortname
-        self.dimensions = dimensions
         
+        self.file = file # File from which data is acquired
+        self.title = title # Name to be given to the dataset
+        self.color = colorscale # Colorscale from pyplot to be used to see image
+        self.colorlabel = colorlabel # Units of what color represents
+        self.shortname = shortname # A shorthand name for the dataset (not really used)
+        self.dimensions = dimensions # Size of the dataset for user reference (# x #)
+        
+        # Attempts to use data from a fits file. If it isn't a fits file, then whatever input for the file attribute is given is used as the data itself.
         try:
             self.imgdata = fits.getdata(self.file)
         except:
             self.imgdata = self.file
         
-        self.shape = np.shape(self.imgdata)
-        self.dim = len(self.shape)
+        self.shape = np.shape(self.imgdata) #Shape of data set in (z,y,x) or (y,x)
+        self.dim = len(self.shape) # Number of dimensions (2 or 3)
 
-class PowerSpectraAvg(object):
+class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requires 3 data sets in order to plot (contour plot)
     
     def __init__(self,data1,data2,data3,title,ratio_x,ratio_y):
         self.data1 = data1
         self.data2 = data2
         self.data3 = data3
         self.title = title
-        self.dim = 1
+        self.dim = 1 # Abritrary dimension, just to distinguish it from typical 2D and 3D data sets.
         self.xticksmin = np.arange(0, 64, 8)
         self.xticksmax = np.round(np.arange(0, 64, 8)*ratio_x)
         self.yticksmin = np.arange(0, 256, 25)
         self.yticksmax = np.round(np.arange(0, 256, 25)*ratio_y)
 
-class FitsFiles(object):
+class FitsFiles(object): # Object that will be used as the main data handler. Keeps a list of all data sets, default and created, available to be used.
 
     def __init__(self):
         
-        self.files = []
-        self.options = []
-        self.dataopts = {}
+        self.files = [] # List that will contain all of the instances of the other objects. Where actual data is.
+        self.options = [] # List that only contains the titles of the datasets.
+        self.dataopts = {} # Dictionary of all available objects. Assigns a number to each dataset name for indexing purposes.
     
-    def add(self, fitsimage):
+    def add(self, fitsimage): # Function that allows addition of datasets to the handler.
         
         self.files.append(fitsimage)
         self.options.append(fitsimage.title)
@@ -78,7 +81,9 @@ class FitsFiles(object):
 
 #---Data---#
 
-Data = FitsFiles()
+Data = FitsFiles() # Create instance of data handler.
+
+# Initiliaze all "default" datasets, which are the actual fits files used.
 
 Data.add(FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','intensity','(1024x1024)'))
 Data.add(FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)','magnetogram','(1024x1024)'))
@@ -89,7 +94,7 @@ Data.add(FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2','(128x1
 
 #---GUI Modules---#
 
-class StatusBar(tk.Frame):
+class StatusBar(tk.Frame): # Status bar located on the top-right side of the window. Used to give some feedback and info to the user. Maybe remove it?
     
     def __init__(self,parent):
         
@@ -100,7 +105,7 @@ class StatusBar(tk.Frame):
         self.statusbar = tk.Label(self,text=text,relief=tk.SUNKEN,bg='white',width=80,anchor='w')
         self.statusbar.grid(row=0)
 
-class OptionMenu(tk.LabelFrame):
+class OptionMenu(tk.LabelFrame): # Section of sidebar containing main option and buttons to view the other menus.
     
     def __init__(self,parent):
         
@@ -134,7 +139,7 @@ class OptionMenu(tk.LabelFrame):
         self.showCM = tk.Label(tabs, text = 'Compute', relief = tk.RAISED, width = 7)
         self.showCM.grid(row = 1, column = 0)
         
-    def updateMenu(self):
+    def updateMenu(self): # Function that is used everytime a new data set is created, in order to update dropdown options.
         
         m = self.menu.children['menu']
         m.delete(0, "end")
@@ -245,10 +250,6 @@ class ScatterMenu(tk.LabelFrame):
         xaxis.grid(row = 0)
         self.choice = tk.Label(self, relief = tk.SUNKEN, text = '(Select a data set)', width = 20)
         self.choice.grid(row = 1)
-        #self.datax = tk.StringVar()
-        #self.datax.set('')
-        #self.plotx = tk.OptionMenu(self,self.datax,*Data.options)
-        #self.plotx.grid(row = 1)
         
         #Choose data set to be used for the y-axis
         yaxis = tk.Label(self,text='Y-Axis')
@@ -322,12 +323,6 @@ class ComputationMenu(tk.LabelFrame):
         
         tk.LabelFrame.__init__(self,parent,text = 'Generate')
         
-        #Option menu that allows user to choose data set to apply some sort of calculation.
-        #self.cmpchoice = tk.StringVar()
-        #self.cmpchoice.set('')
-        #cmpmenu = tk.OptionMenu(self,self.cmpchoice,*Data.options)
-        #cmpmenu.grid(row = 0)
-        
         #Frame to organize checkbuttons for Average and Difference computations.
         avgdif = tk.Frame(self)
         avgdif.grid(row = 1)
@@ -335,13 +330,11 @@ class ComputationMenu(tk.LabelFrame):
         #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
         self.imgavg = tk.BooleanVar()
         imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg)
-        #imgavgopt = tk.Button(avgdif, text = 'Average', command=imgaverage)
         imgavgopt.grid(row=0,column=0)
         
         #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
         self.imgdif = tk.BooleanVar()#
         imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif)
-        #imgdifopt = tk.Button(avgdif, text = 'Difference', command=imgdifference)
         imgdifopt.grid(row=0,column=1)
         
         temporallabel = tk.Label(self,text = 'Temporal')
@@ -352,7 +345,6 @@ class ComputationMenu(tk.LabelFrame):
         
         self.tempavg = tk.BooleanVar()#
         tempavgopt = tk.Checkbutton(temporal, text = 'Average', variable = self.tempavg)
-        #powerspectraopt = tk.Button(self, text='Power Spectra', command=powerspectra)
         tempavgopt.grid(row = 0, column = 0)
         
         self.tempdiff = tk.BooleanVar()
@@ -362,7 +354,6 @@ class ComputationMenu(tk.LabelFrame):
         #Checkbutton that allows the user to generate a power spectra of a data set.
         self.ps = tk.BooleanVar()#
         powerspectraopt = tk.Checkbutton(self, text = 'Power Spectra',variable=self.ps)
-        #powerspectraopt = tk.Button(self, text='Power Spectra', command=powerspectra)
         powerspectraopt.grid(row = 4)
         
         #Button that allows the user to compute the selected computations.
@@ -454,7 +445,6 @@ class Helioseismology(tk.Tk):
         
         self.sliceMenu = SliceMenu(sideMenu,self.viewslice)
         self.sliceMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
-        #self.sliceMenu.grid_remove()
         
         self.scatterMenu = ScatterMenu(sideMenu,self.plot)
         self.scatterMenu.grid(row = 3, sticky = tk.E+tk.W, ipady = 3)
@@ -887,7 +877,8 @@ class Helioseismology(tk.Tk):
             
             title = Data.files[index].title + ' Power Spectra'
             
-            #PS ends here. 3D
+            #PS ends here.
+            
             Data.add(FitsImage(power,title,None,'idk',title+'power','(128x128x512)'))
             
             begin_time = 0
