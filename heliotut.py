@@ -3,9 +3,6 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from matplotlib import style
-import matplotlib.ticker as mticker
 
 import tkinter as tk
 from tkinter import ttk
@@ -64,6 +61,7 @@ class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requ
         self.xticksmax = np.round(np.arange(0, 64, 8)*ratio_x)
         self.yticksmin = np.arange(0, 256, 25)
         self.yticksmax = np.round(np.arange(0, 256, 25)*ratio_y)
+        self.dimensions = '(128x128)'
 
 class FitsFiles(object): # Object that will be used as the main data handler. Keeps a list of all data sets, default and created, available to be used.
 
@@ -411,7 +409,10 @@ class FileInfo(tk.LabelFrame):
     def update(self,fitsimage):
         self.namelabel.config(text = self.name + ' ' + fitsimage.title, justify = tk.LEFT)
         self.dimlabel.config(text = self.dim + ' ' + fitsimage.dimensions, justify = tk.LEFT)
-        self.filelabel.config(text = self.file + ' ' + fitsimage.file, justify = tk.LEFT)
+        try:
+            self.filelabel.config(text = self.file + ' ' + fitsimage.file, justify = tk.LEFT)
+        except:
+            self.filelabel.config(text = self.file + ' Generated Data')
 
 #---Main App---#
 
@@ -423,8 +424,8 @@ class Helioseismology(tk.Tk):
         
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
         
-        self.statusBar = StatusBar(self)
-        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W+tk.S+tk.N, pady = 3, padx = 2)
+        '''self.statusBar = StatusBar(self)
+        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W+tk.S+tk.N, pady = 3, padx = 2)'''
         
         self.mainCanvas = PlotCanvas(self)
         self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 7, sticky = tk.W+tk.E+tk.N+tk.S)
@@ -605,6 +606,8 @@ class Helioseismology(tk.Tk):
                     plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
                     labelindx = 2
                     slicetext = 'y ='+texty
+                elif slicet:
+                    messagebox.showerror('Error','Invalid axis.')
                 else:
                     plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
                     labelindx = 2
@@ -647,7 +650,6 @@ class Helioseismology(tk.Tk):
                 sliceWindow.deiconify()
             else:
                 self.mainCanvas.f.canvas.draw()
-                self.statusBar.statusbar.config(text = text)
             
             self.plotTools.clearEntries()
             self.sliceMenu.clearEntries()
@@ -802,7 +804,6 @@ class Helioseismology(tk.Tk):
                 plotWindow.deiconify()
             else:
                 self.mainCanvas.f.canvas.draw()
-                self.statusBar.statusbar.config(text=text)
             
             self.plotTools.clearEntries()
             
@@ -819,7 +820,7 @@ class Helioseismology(tk.Tk):
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
             shortname = 'avg'+Data.files[index].shortname
-            dimensions = Data.files[index].dimensions
+            dimensions = Data.files[index].dimensions[0:8] + ')'
             Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
@@ -832,7 +833,7 @@ class Helioseismology(tk.Tk):
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
             shortname = 'dif'+Data.files[index].shortname
-            dimensions = Data.files[index].dimensions
+            dimensions = Data.files[index].dimensions[0:8] + ')'
             Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
@@ -845,7 +846,7 @@ class Helioseismology(tk.Tk):
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
             shortname = 'tempavg'+Data.files[index].shortname
-            dimensions = Data.files[index].dimensions
+            dimensions = Data.files[index].dimensions[0:8] + ')'
             Data.add(FitsImage(tempavg,title,color,colorlabel,shortname,dimensions))
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
@@ -881,7 +882,6 @@ class Helioseismology(tk.Tk):
             
             Data.add(FitsImage(power,title,None,'idk',title+'power','(128x128x512)'))
             
-            begin_time = 0
             begin_space = 0
             end_time = power.shape[0]
             end_space = power.shape[1]
@@ -913,7 +913,7 @@ class Helioseismology(tk.Tk):
             
             dx = 1.39 # length per pixel in Mm
             pix = 128 # number of pixels
-            kx = ky = np.pi/dx
+            kx = np.pi/dx
             r_sun = 696 # radius of the sun in Mm
             l = kx * r_sun # wavenumber in unit of degree
             ratio_x = l/(pix/2)
