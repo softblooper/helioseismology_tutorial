@@ -354,9 +354,13 @@ class ComputationMenu(tk.LabelFrame):
         powerspectraopt = tk.Checkbutton(self, text = 'Power Spectra',variable=self.ps)
         powerspectraopt.grid(row = 4)
         
+        self.var = tk.BooleanVar()#
+        varianceopt = tk.Checkbutton(self, text = 'Variance',variable=self.var)
+        varianceopt.grid(row = 5)
+        
         #Button that allows the user to compute the selected computations.
         computebutton = tk.Button(self, text='Compute', command=command)
-        computebutton.grid(row = 5)
+        computebutton.grid(row = 6)
 
 class PlotCanvas(tk.Frame):
     
@@ -423,9 +427,6 @@ class Helioseismology(tk.Tk):
         tk.Tk.__init__(self,*args,**kwargs)
         
         tk.Tk.wm_title(self,'Helioseismology Tutorial')
-        
-        '''self.statusBar = StatusBar(self)
-        self.statusBar.grid(row = 0, column = 0, columnspan = 2, sticky = tk.E+tk.W+tk.S+tk.N, pady = 3, padx = 2)'''
         
         self.mainCanvas = PlotCanvas(self)
         self.mainCanvas.grid(row = 1, column = 0, columnspan = 2, rowspan = 7, sticky = tk.W+tk.E+tk.N+tk.S)
@@ -661,7 +662,7 @@ class Helioseismology(tk.Tk):
                 sliceWindow.destroy()
     
     def animation(self):
-        keep = self.sliceMenu.keep.get()
+        #keep = self.sliceMenu.keep.get()
         try:
             aniWindow = tk.Toplevel()
             aniWindow.withdraw()
@@ -931,12 +932,32 @@ class Helioseismology(tk.Tk):
         except:
             messagebox.showerror('Error',"Can't calculate power spectrum! Wrong dataset.")
     
+    def variance(self):
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        if Data.files[index].dim == 3:
+            tempavg = np.mean(Data.files[index].imgdata,axis=0)
+            length = Data.files[index].shape[0]
+            tempdiff = []
+            for i in range(length):
+                td = Data.files[index].imgdata[i] -tempavg
+                tempdiff.append(td)
+            variance = (1/len(tempdiff)) * (np.sum(np.array(tempdiff)**2, axis = 0))
+            title = Data.files[index].title + ' Variance'
+            color = Data.files[index].color
+            colorlabel = Data.files[index].colorlabel
+            shortname = 'variance'+Data.files[index].shortname
+            dimensions = Data.files[index].dimensions[0:8] + ')'
+            Data.add(FitsImage(variance,title,color,colorlabel,shortname,dimensions))
+        else:
+            messagebox.showerror('Error',"Can't compute with this dataset!")
+    
     def compute(self):
         avg = self.computationMenu.imgavg.get()
         dif = self.computationMenu.imgdif.get()
         tempavg = self.computationMenu.tempavg.get()
         tempdiff = self.computationMenu.tempdiff.get()
         ps = self.computationMenu.ps.get()
+        var = self.computationMenu.var.get()
         
         if avg:
             self.imgaverage()
@@ -948,6 +969,8 @@ class Helioseismology(tk.Tk):
             self.temporalavg()
         if tempdiff:
             self.temporaldiff()
+        if var:
+            self.variance()
         
         self.optionMenu.updateMenu()
         self.scatterMenu.updateMenu()
