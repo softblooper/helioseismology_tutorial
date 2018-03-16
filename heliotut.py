@@ -628,11 +628,13 @@ class Helioseismology(tk.Tk):
             
             else:
                 plt.title(image.title)
-                plt.xlabel('Wavenumber (l)')
+                plt.xlabel('Wavenumber (1/Mm)')
                 plt.ylabel('Frequency (mHz)')
                 plt.xticks(image.xticksmin, image.xticksmax)
                 plt.yticks(image.yticksmin, image.yticksmax)
                 plt.contourf(image.data1, image.data2, image.data3, 100)
+                ibar = plt.colorbar()
+                ibar.set_label('Power')
         
             if (minx and maxx):
                 minx = int(minx)
@@ -882,7 +884,7 @@ class Helioseismology(tk.Tk):
             
             #PS ends here.
             
-            Data.add(FitsImage(power,title,None,'idk',title+'power','(128x128x512)'))
+            Data.add(FitsImage(power,title,None,'Power',title+'power','(128x128x512)'))
             
             begin_space = 0
             end_time = power.shape[0]
@@ -918,7 +920,7 @@ class Helioseismology(tk.Tk):
             kx = np.pi/dx
             r_sun = 696 # radius of the sun in Mm
             l = kx * r_sun # wavenumber in unit of degree
-            ratio_x = l/(pix/2)
+            ratio_x = kx/64 #l/(pix/2)
             
             dt = 60 # in sec
             omega = np.pi/dt # temporal frquency
