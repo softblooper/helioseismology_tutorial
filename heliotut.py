@@ -630,8 +630,8 @@ class Helioseismology(tk.Tk):
                 plt.title(image.title)
                 plt.xlabel('Wavenumber (1/Mm)')
                 plt.ylabel('Frequency (mHz)')
-                plt.xticks(image.xticksmin, image.xticksmax)
-                plt.yticks(image.yticksmin, image.yticksmax)
+                #plt.xticks(image.xticksmin, image.xticksmax)
+                #plt.yticks(image.yticksmin, image.yticksmax)
                 plt.contourf(image.data1, image.data2, image.data3, 100)
                 ibar = plt.colorbar()
                 ibar.set_label('Power')
@@ -846,7 +846,7 @@ class Helioseismology(tk.Tk):
         index = Data.dataopts[self.optionMenu.choice.get()]
         if Data.files[index].dim == 3:
             tempavg = np.mean(Data.files[index].imgdata,axis=0)
-            title = Data.files[index].title + ' Temp. Average'
+            title = Data.files[index].title + ' Mean'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
             shortname = 'tempavg'+Data.files[index].shortname
@@ -910,11 +910,6 @@ class Helioseismology(tk.Tk):
                     avg = np.mean(flatpower[inds])
                     a[i-cen_time, r] = a[i-cen_time, r] +avg
             
-            m = np.linspace(1, cen_space, cen_space)
-            n = np.linspace(1, cen_time, cen_time)
-            M, N = np.meshgrid(m, n)
-            A = a
-            
             dx = 1.39 # length per pixel in Mm
             pix = 128 # number of pixels
             kx = np.pi/dx
@@ -927,6 +922,11 @@ class Helioseismology(tk.Tk):
             v = omega/(2*np.pi) # cyclic frequency
             frq = v*1000 # in unit of mHz
             ratio_y = frq/256
+            
+            m = np.linspace(0, kx, 64)
+            n = np.linspace(0, frq, 256)
+            M, N = np.meshgrid(m, n)
+            A = a
             
             title = title + ' Avg.'
             
@@ -947,7 +947,7 @@ class Helioseismology(tk.Tk):
             variance = (1/len(tempdiff)) * (np.sum(np.array(tempdiff)**2, axis = 0))
             title = Data.files[index].title + ' Variance'
             color = Data.files[index].color
-            colorlabel = Data.files[index].colorlabel
+            colorlabel = r'Velocity$^2$ ($m^2/s^2$)'
             shortname = 'variance'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions[0:8] + ')'
             Data.add(FitsImage(variance,title,color,colorlabel,shortname,dimensions))
