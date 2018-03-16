@@ -327,36 +327,36 @@ class ComputationMenu(tk.LabelFrame):
         
         #Checkbutton that allows the user to generate an average between two slices of a 3-D data set.
         self.imgavg = tk.BooleanVar()
-        imgavgopt = tk.Checkbutton(avgdif,text='Average',variable=self.imgavg)
+        imgavgopt = tk.Checkbutton(avgdif,text='2 Min. Average',variable=self.imgavg)
         imgavgopt.grid(row=0,column=0)
         
         #Checkbutton that allows the user to generate a difference between two slices of a 3-D data set.
         self.imgdif = tk.BooleanVar()#
-        imgdifopt = tk.Checkbutton(avgdif,text='Difference',variable=self.imgdif)
-        imgdifopt.grid(row=0,column=1)
+        imgdifopt = tk.Checkbutton(avgdif,text='2 Min. Difference',variable=self.imgdif)
+        imgdifopt.grid(row=1,column=0)
         
-        temporallabel = tk.Label(self,text = 'Temporal')
-        temporallabel.grid(row = 2)
+        '''temporallabel = tk.Label(self,text = 'Temporal')
+        temporallabel.grid(row = 2)'''
         
         temporal = tk.Frame(self)
         temporal.grid(row = 3)
         
         self.tempavg = tk.BooleanVar()#
-        tempavgopt = tk.Checkbutton(temporal, text = 'Average', variable = self.tempavg)
+        tempavgopt = tk.Checkbutton(temporal, text = 'Mean', variable = self.tempavg)
         tempavgopt.grid(row = 0, column = 0)
         
         self.tempdiff = tk.BooleanVar()
-        tempdiffopt = tk.Checkbutton(temporal, text = 'Difference', variable = self.tempdiff)
+        tempdiffopt = tk.Checkbutton(temporal, text = 'Residuals', variable = self.tempdiff)
         tempdiffopt.grid(row = 0, column = 1)
+        
+        self.var = tk.BooleanVar()#
+        varianceopt = tk.Checkbutton(self, text = 'Variance',variable=self.var)
+        varianceopt.grid(row = 4)
         
         #Checkbutton that allows the user to generate a power spectra of a data set.
         self.ps = tk.BooleanVar()#
         powerspectraopt = tk.Checkbutton(self, text = 'Power Spectra',variable=self.ps)
-        powerspectraopt.grid(row = 4)
-        
-        self.var = tk.BooleanVar()#
-        varianceopt = tk.Checkbutton(self, text = 'Variance',variable=self.var)
-        varianceopt.grid(row = 5)
+        powerspectraopt.grid(row = 5)
         
         #Button that allows the user to compute the selected computations.
         computebutton = tk.Button(self, text='Compute', command=command)
@@ -593,6 +593,7 @@ class Helioseismology(tk.Tk):
                     plt.ylabel(labels[labelindy])
                     ibar = plt.colorbar()
                     ibar.set_label(image.colorlabel)
+                plt.gca().invert_yaxis()
             
             elif image.dim == 2:
                 sizey = np.arange(image.shape[0])
@@ -623,6 +624,7 @@ class Helioseismology(tk.Tk):
                     plt.ylabel(labels[labelindy])
                     ibar = plt.colorbar()
                     ibar.set_label(image.colorlabel)
+                plt.gca().invert_yaxis()
             
             else:
                 plt.title(image.title)
@@ -640,7 +642,6 @@ class Helioseismology(tk.Tk):
                 miny = int(miny)
                 maxy = int(maxy)
                 plt.ylim(maxy,miny)
-            
             if image.dim == 1:
                 text = 'Showing: ' + image.title
             else:
@@ -859,12 +860,12 @@ class Helioseismology(tk.Tk):
             length = Data.files[index].shape[0]
             tempdiff = []
             for i in range(length):
-                td = Data.files[index].imgdata[i] -tempavg
+                td = Data.files[index].imgdata[i] - tempavg
                 tempdiff.append(td)
-            title = Data.files[index].title + ' Temp. Difference'
+            title = Data.files[index].title + ' Residuals'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
-            shortname = 'tempdiff'+Data.files[index].shortname
+            shortname = 'residual'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions
             Data.add(FitsImage(tempdiff,title,color,colorlabel,shortname,dimensions))
         else:
