@@ -31,23 +31,46 @@ class FitsImage(object): # Allows creating of plots with data from fits files. A
     
     # Initializes object, converts fits data into Python array. Detects shape for corresponding plot.
     
-    def __init__(self,file,title,colorscale,colorlabel,shortname,dimensions):
+    def __init__(self,file,title,colorscale,colorlabel,colorunits,shortname,dimensions):
         
         self.file = file # File from which data is acquired
         self.title = title # Name to be given to the dataset
         self.color = colorscale # Colorscale from pyplot to be used to see image
-        self.colorlabel = colorlabel # Units of what color represents
+        self.colorlabel = colorlabel # Quantity of what color represents
+        self.colorunits = colorunits # Units of above quanity
         self.shortname = shortname # A shorthand name for the dataset (not really used)
         self.dimensions = dimensions # Size of the dataset for user reference (# x #)
         
         # Attempts to use data from a fits file. If it isn't a fits file, then whatever input for the file attribute is given is used as the data itself.
         try:
             self.imgdata = fits.getdata(self.file)
+            self.file = file[5:]
         except:
             self.imgdata = self.file
         
         self.shape = np.shape(self.imgdata) #Shape of data set in (z,y,x) or (y,x)
         self.dim = len(self.shape) # Number of dimensions (2 or 3)
+        
+    def labels3d(self, xname, xunit, yname, yunit, tname, tunit, xshort, yshort, tshort):
+        self.xname = xname
+        self.xunit = xunit
+        self.yname = yname
+        self.yunit = yunit
+        self.tname = tname
+        self.tunit = tunit
+        
+        self.xshort = xshort
+        self.yshort = yshort
+        self.tshort = tshort
+    
+    def labels2d(self, xname, xunit, yname, yunit, xshort, yshort):
+        self.xname = xname
+        self.xunit = xunit
+        self.yname = yname
+        self.yunit = yunit
+        
+        self.xshort = xshort
+        self.yshort = yshort
 
 class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requires 3 data sets in order to plot (contour plot)
     
@@ -62,6 +85,18 @@ class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requ
         self.yticksmin = np.arange(0, 256, 25)
         self.yticksmax = np.round(np.arange(0, 256, 25)*ratio_y)
         self.dimensions = '(128x128)'
+    
+    def labels(self, xname, xunit, yname, yunit, zname, zunit, xshort, yshort, zshort):
+        self.xname = xname
+        self.xunit = xunit
+        self.yname = yname
+        self.yunit = yunit
+        self.zname = zname
+        self.zunit = zunit
+        
+        self.zshort = xshort
+        self.zshort = yshort
+        self.zshort = zshort
 
 class FitsFiles(object): # Object that will be used as the main data handler. Keeps a list of all data sets, default and created, available to be used.
 
@@ -83,11 +118,16 @@ Data = FitsFiles() # Create instance of data handler.
 
 # Initiliaze all "default" datasets, which are the actual fits files used.
 
-Data.add(FitsImage('fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','intensity','(1024x1024)'))
-Data.add(FitsImage('fd_M_96m_01.fits','Magnetogram','gray','Guass (G)','magnetogram','(1024x1024)'))
-Data.add(FitsImage('fd_V_01h.fits','Dopplergram','RdBu_r','Velocity (m/s)','dopplergram','(1024x1024)'))
-Data.add(FitsImage('data1.fits','Data 1','gray','Velocity (m/s)','data1','(128x128x512)'))
-Data.add(FitsImage('data2.fits','Data 2','gray','Velocity (m/s)','data2','(128x128x512)'))
+Data.add(FitsImage('fits/fd_Ic_6h_01d.fits','Intensity','gray','Continuum Intensity','','intensity','(1024x1024)'))
+Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
+Data.add(FitsImage('fits/fd_M_96m_01.fits','Magnetogram','gray','Guass', '(G)','magnetogram','(1024x1024)'))
+Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
+Data.add(FitsImage('fits/fd_V_01h.fits','Dopplergram','RdBu_r','Velocity', '(m/s)','dopplergram','(1024x1024)'))
+Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
+Data.add(FitsImage('fits/data1.fits','Data 1','gray','Velocity', '(m/s)','data1','(128x128x512)'))
+Data.files[-1].labels3d('X', '(pix)', 'Y', '(pix)', 'Time', '(s)', 'x = ', 'y = ', 't = ')
+Data.add(FitsImage('fits/data2.fits','Data 2','gray','Velocity', '(m/s)','data2','(128x128x512)'))
+Data.files[-1].labels3d('X', '(pix)', 'Y', '(pix)', 'Time', '(s) ', 'x = ', 'y = ', 't = ')
 
 
 #---GUI Modules---#
@@ -205,13 +245,13 @@ class SliceMenu(tk.LabelFrame):
         sliceentries = tk.Frame(self)
         sliceentries.grid(row=0)
         
-        xslicelabel = tk.Label(sliceentries,text='X')
+        xslicelabel = tk.Label(sliceentries,text='D1')
         xslicelabel.grid(row=0,column=0,padx=5)
         
-        yslicelabel = tk.Label(sliceentries,text='Y')
+        yslicelabel = tk.Label(sliceentries,text='D2')
         yslicelabel.grid(row=0,column=1,padx=5)
         
-        tslicelabel = tk.Label(sliceentries,text='t')
+        tslicelabel = tk.Label(sliceentries,text='D3')
         tslicelabel.grid(row=0,column=2,padx=5)
         
         self.xslice = tk.Entry(sliceentries,width = 3)
@@ -299,9 +339,9 @@ class AnimationMenu(tk.LabelFrame):
         
         self.aniaxis = tk.IntVar()
         
-        tani = tk.Radiobutton(frame2, text = 't-Axis', variable = self.aniaxis, value = 0)
-        xani = tk.Radiobutton(frame2, text = 'X-Axis', variable = self.aniaxis, value = 2)
-        yani = tk.Radiobutton(frame2, text = 'Y-Axis', variable = self.aniaxis, value = 1)
+        tani = tk.Radiobutton(frame2, text = 'D3-Axis', variable = self.aniaxis, value = 0)
+        xani = tk.Radiobutton(frame2, text = 'D1-Axis', variable = self.aniaxis, value = 2)
+        yani = tk.Radiobutton(frame2, text = 'D2-Axis', variable = self.aniaxis, value = 1)
         tani.grid(row = 0)
         xani.grid(row = 1)
         yani.grid(row = 2)
@@ -334,9 +374,6 @@ class ComputationMenu(tk.LabelFrame):
         self.imgdif = tk.BooleanVar()#
         imgdifopt = tk.Checkbutton(avgdif,text='2 Min. Difference',variable=self.imgdif)
         imgdifopt.grid(row=1,column=0)
-        
-        '''temporallabel = tk.Label(self,text = 'Temporal')
-        temporallabel.grid(row = 2)'''
         
         temporal = tk.Frame(self)
         temporal.grid(row = 3)
@@ -472,13 +509,13 @@ class Helioseismology(tk.Tk):
         self.CM = False
         self.optionMenu.choice.trace('w', self.xScatterChange)
         
-        nsf = Image.open('nsf1.gif')
+        nsf = Image.open('images/nsf1.gif')
         nsf = nsf.resize((96, 96))
         self.nsf = ImageTk.PhotoImage(nsf)
         nsflogo = tk.Label(sideMenu,image = self.nsf)
         nsflogo.grid(row=6,sticky=tk.S)
         
-        nmsupng = Image.open('NM_State_logo.png')
+        nmsupng = Image.open('images/NM_State_logo.png')
         nmsupng = nmsupng.resize((96, 96))
         self.nmsu = ImageTk.PhotoImage(nmsupng)
         nmsulogo = tk.Label(sideMenu,image = self.nmsu)
@@ -520,10 +557,6 @@ class Helioseismology(tk.Tk):
             
             image = Data.files[index]
             
-            labels = ('Velocity (m/s)','Time (s)','X-Pix','Y-Pix')
-            labelindx = None
-            labelindy = None
-            
             if (minz and maxz):
                 minz = int(minz)
                 maxz = int(maxz)
@@ -539,61 +572,64 @@ class Helioseismology(tk.Tk):
                     slicex = int(slicex)
                     if slicey:
                         slicey = int(slicey)
-                        labelindx = 1
-                        slicetext = 'x = '+textx+' and y = '+texty
+                        labelvs = image.tname
+                        labelvsunit = image.tunit
+                        slicetext = image.xshort+textx+' and '+image.yshort+texty
                         data = image.imgdata[:,slicey,slicex]
                         plt.plot(sizet,data,lw=0.5,color='black')
                     elif slicet:
                         slicet = int(slicet)
-                        labelindx = 3
-                        slicetext = 't = '+textt+' and x = '+textx
+                        labelvs = image.yname
+                        labelvsunit = image.yunit
+                        slicetext = image.tshort+textt+' and '+image.xshort+textx
                         data = image.imgdata[slicet,:,slicex]
                         plt.plot(sizey,data,lw=0.5,color='black')
                     else:
-                        labelindx = 1
-                        labelindy = 3
-                        slicetext = 'x = '+textx
+                        slicetext = image.xshort+textx
+                        labelx = image.tname + ' ' + image.tunit
+                        labely = image.yname + ' ' + image.yunit
                         data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
                         plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                 elif slicey:
                     slicey = int(slicey)
                     if slicet:
                         slicet = int(slicet)
-                        labelindx = 2
-                        slicetext = 't = '+textt+' and y = '+texty
+                        labelvs = image.xname
+                        labelvsunit = image.xunit
+                        slicetext = image.tshort+textt+' and '+image.yshort+texty
                         data = image.imgdata[slicet,slicey,:]
                         plt.plot(sizex,data,lw=0.5,color='black')
                     else:
-                        labelindx = 2
-                        labelindy = 1
-                        slicetext = 'y = '+texty
+                        slicetext = image.yshort+texty
+                        labelx = image.xname + ' ' + image.xunit
+                        labely = image.tname + ' ' + image.tunit
                         data = image.imgdata[:,slicey,:]
                         plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz,origin = 'lower')
                 elif slicet:
                     slicet = int(slicet)
-                    labelindx = 2
-                    labelindy = 3
-                    slicetext = 't = '+textt
+                    slicetext = image.tshort+textt
+                    labelx = image.xname + ' ' + image.xunit
+                    labely = image.yname + ' ' + image.yunit
                     data = image.imgdata[slicet,...]
                     plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
                 else:
                     data = image.imgdata[0]
                     plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                    labelindx = 2
-                    labelindy = 3
-                    slicetext = 't = 0'
+                    slicetext = image.tshort+'0'
+                    labelx = image.xname + ' ' + image.xunit
+                    labely = image.yname + ' ' + image.yunit
                 
                 if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
-                    plt.title(labels[0]+' vs '+labels[labelindx]+' at '+slicetext)
-                    plt.ylabel(labels[0])
-                    plt.xlabel(labels[labelindx])
+                    plt.title(image.colorlabel+' vs '+labelvs+' at '+slicetext)
+                    plt.ylabel(image.colorlabel+' '+image.colorunits)
+                    plt.xlabel(labelvs+labelvsunit)
                 else:
                     plt.title('Slice of '+image.title+' at '+slicetext)
-                    plt.xlabel(labels[labelindx])
-                    plt.ylabel(labels[labelindy])
+                    plt.xlabel(labelx)
+                    plt.ylabel(labely)
                     ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel)
-                plt.gca().invert_yaxis()
+                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+                    plt.gca().invert_yaxis()
             
             elif image.dim == 2:
                 sizey = np.arange(image.shape[0])
@@ -601,40 +637,40 @@ class Helioseismology(tk.Tk):
                 if slicex:
                     slicex=int(slicex)
                     plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
-                    labelindx = 3
-                    slicetext = 'x ='+textx
+                    labelindx = image.yname + ' ' + image.yunit
+                    slicetext = image.xshort+textx
                 elif slicey:
                     slicey=int(slicey)
                     plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
-                    labelindx = 2
-                    slicetext = 'y ='+texty
+                    labelindx = image.xname + ' ' + image.xunit
+                    slicetext = image.yshort+texty
                 elif slicet:
                     messagebox.showerror('Error','Invalid axis.')
                 else:
                     plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
-                    labelindx = 2
-                    labelindy = 3
+                    labelindx = image.xname + ' ' + image.xunit
+                    labelindy = image.yname + ' ' + image.yunit
                 if (slicex or slicey):
                     plt.title(image.colorlabel+' at '+slicetext)
-                    plt.ylabel(image.colorlabel)
-                    plt.xlabel(labels[labelindx])
+                    plt.ylabel(image.colorlabel + image.colorunits)
+                    plt.xlabel(labelindx)
                 else:
                     plt.title(image.title)
-                    plt.xlabel(labels[labelindx])
-                    plt.ylabel(labels[labelindy])
+                    plt.xlabel(labelindx)
+                    plt.ylabel(labelindy)
                     ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel)
-                plt.gca().invert_yaxis()
+                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+                    plt.gca().invert_yaxis()
             
             else:
                 plt.title(image.title)
-                plt.xlabel('Wavenumber (1/Mm)')
-                plt.ylabel('Frequency (mHz)')
+                plt.xlabel(image.xname+''+image.xunit)
+                plt.ylabel(image.yname+''+image.yunit)
                 #plt.xticks(image.xticksmin, image.xticksmax)
                 #plt.yticks(image.yticksmin, image.yticksmax)
                 plt.contourf(image.data1, image.data2, image.data3, 100)
                 ibar = plt.colorbar()
-                ibar.set_label('Power')
+                ibar.set_label(image.zname + ' ' + image.zunit)
         
             if (minx and maxx):
                 minx = int(minx)
@@ -681,10 +717,6 @@ class Helioseismology(tk.Tk):
             minz = self.plotTools.minrangez.get()
             maxz = self.plotTools.maxrangez.get()
             
-            labels = ('Time (s)','X-Pix','Y-Pix')
-            labelindx = None
-            labelindy = None
-            
             aniaxis = int(self.animationMenu.aniaxis.get())
             image = Data.files[index]
             length = image.shape[aniaxis]
@@ -701,21 +733,23 @@ class Helioseismology(tk.Tk):
                 maxz = None
             
             if aniaxis == 0:
-                anitext = 't'
-                labelindx = 1
-                labelindy = 2
+                anitext = image.tshort[0]
+                labelindx = image.xname + ' ' + image.xunit
+                labelindy = image.yname + ' ' + image.yunit
                 im = plt.imshow(image.imgdata[0], cmap = image.color, vmin=minz, vmax=maxz)
+                plt.gca().invert_yaxis()
             elif aniaxis == 2:
-                anitext = 'X'
-                labelindx = 0
-                labelindy = 2
+                anitext = image.xshort[0]
+                labelindx = image.tname + ' ' + image.tunit
+                labelindy = image.yname + ' ' + image.yunit
                 data = ndimage.rotate(image.imgdata[:,0,:], 270)
                 im = plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
             elif aniaxis == 1:
-                anitext = 'Y'
-                labelindx = 1
-                labelindy = 0
+                anitext = image.yshort[0]
+                labelindx = image.xname + ' ' + image.xunit
+                labelindy = image.tname + ' ' + image.tunit
                 im = plt.imshow(image.imgdata[...,0], cmap = image.color, vmin=minz, vmax=maxz, origin = 'lower')
+                plt.gca().invert_yaxis()
             
             if (minx and maxx):
                 minx = int(minx)
@@ -727,27 +761,27 @@ class Helioseismology(tk.Tk):
                 plt.ylim(maxy,miny)
             
             title = plt.title('Animation of '+image.title+' through '+anitext+'-Axis')
-            plt.xlabel(labels[labelindx])
-            plt.ylabel(labels[labelindy])
+            plt.xlabel(labelindx)
+            plt.ylabel(labelindy)
             ibar = plt.colorbar()
-            ibar.set_label(image.colorlabel)
+            ibar.set_label(image.colorlabel + ' ' + image.colorunits)
             
             def ani(i):
                 frame = i + 1
                 if aniaxis == 0:
                     im.set_array(image.imgdata[i])
-                    title.set_text('Time Animation, t = '+str(frame))
+                    title.set_text(image.tname+' Animation, ' + image.tshort + str(frame))
                     return [im]
                     return title
                 if aniaxis == 2:
                     d = ndimage.rotate(image.imgdata[:,i,:], 270)
                     im.set_array(d)
-                    title.set_text('X-Axis Animation, x = '+str(frame))
+                    title.set_text(image.xname+'-Axis Animation, ' + image.xshort + str(frame))
                     return [im]
                     return title
                 if aniaxis == 1:
                     im.set_array(image.imgdata[...,i])
-                    title.set_text('Y-Axis Animation, y = '+str(frame))
+                    title.set_text(image.yname+'-Axis Animation, ' + image.yshort + str(frame))
                     return [im]
                     return title
             
@@ -823,9 +857,11 @@ class Helioseismology(tk.Tk):
             title = Data.files[index].title + ' Average'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
+            colorunit = Data.files[index].colorunits
             shortname = 'avg'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions[0:8] + ')'
-            Data.add(FitsImage(average,title,color,colorlabel,shortname,dimensions))
+            Data.add(FitsImage(average,title,color,colorlabel,colorunit,shortname,dimensions))
+            Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
     
@@ -836,9 +872,11 @@ class Helioseismology(tk.Tk):
             title = Data.files[index].title + ' Difference'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
+            colorunit = Data.files[index].colorunits
             shortname = 'dif'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions[0:8] + ')'
-            Data.add(FitsImage(difference,title,color,colorlabel,shortname,dimensions))
+            Data.add(FitsImage(difference,title,color,colorlabel,colorunit,shortname,dimensions))
+            Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
     
@@ -849,9 +887,11 @@ class Helioseismology(tk.Tk):
             title = Data.files[index].title + ' Mean'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
+            colorunit = Data.files[index].colorunits
             shortname = 'tempavg'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions[0:8] + ')'
-            Data.add(FitsImage(tempavg,title,color,colorlabel,shortname,dimensions))
+            Data.add(FitsImage(tempavg,title,color,colorlabel,colorunit,shortname,dimensions))
+            Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
     
@@ -867,9 +907,11 @@ class Helioseismology(tk.Tk):
             title = Data.files[index].title + ' Residuals'
             color = Data.files[index].color
             colorlabel = Data.files[index].colorlabel
+            colorunit = Data.files[index].colorunits
             shortname = 'residual'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions
-            Data.add(FitsImage(tempdiff,title,color,colorlabel,shortname,dimensions))
+            Data.add(FitsImage(tempdiff,title,color,colorlabel,colorunit,shortname,dimensions))
+            Data.files[-1].labels3d('X', '(pix)', 'Y', '(pix)', 'Time', '(s)', 'x = ', 'y = ', 't = ')
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
     
@@ -884,7 +926,8 @@ class Helioseismology(tk.Tk):
             
             #PS ends here.
             
-            Data.add(FitsImage(power,title,None,'Power',title+'power','(128x128x512)'))
+            Data.add(FitsImage(power,title,None,'Power',None,title+'power','(128x128x512)'))
+            Data.files[-1].labels3d('X', '(pix)', 'Y', '(pix)', 'Frequency', '(Hz) ', 'x = ', 'y = ', r'$\nu$ = ')
             
             begin_space = 0
             end_time = power.shape[0]
@@ -931,6 +974,7 @@ class Helioseismology(tk.Tk):
             title = title + ' Avg.'
             
             Data.add(PowerSpectraAvg(M,N,A,title,ratio_x,ratio_y)) #Power Spectrum Average
+            Data.files[-1].labels('Wavenumber', '(1/Mm)', 'Frequency', '(mHz)', 'Power', None, 'k = ', r'$\nu$ = ', 't = ')
                 
         except:
             messagebox.showerror('Error',"Can't calculate power spectrum! Wrong dataset.")
@@ -947,10 +991,13 @@ class Helioseismology(tk.Tk):
             variance = (1/len(tempdiff)) * (np.sum(np.array(tempdiff)**2, axis = 0))
             title = Data.files[index].title + ' Variance'
             color = Data.files[index].color
-            colorlabel = r'Velocity$^2$ ($m^2/s^2$)'
+            #colorlabel = r'Velocity$^2$ ($m^2/s^2$)'
+            colorlabel = Data.files[index].colorlabel+r'$^2$'
+            colorunit = Data.files[index].colorunits+r'$^2$'
             shortname = 'variance'+Data.files[index].shortname
             dimensions = Data.files[index].dimensions[0:8] + ')'
-            Data.add(FitsImage(variance,title,color,colorlabel,shortname,dimensions))
+            Data.add(FitsImage(variance,title,color,colorlabel,colorunit,shortname,dimensions))
+            Data.files[-1].labels2d('X', '(pix)', 'Y', '(pix)', 'x = ', 'y = ')
         else:
             messagebox.showerror('Error',"Can't compute with this dataset!")
     
