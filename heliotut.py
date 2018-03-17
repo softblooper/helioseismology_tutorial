@@ -530,175 +530,184 @@ class Helioseismology(tk.Tk):
 
     def viewslice(self):
         keep = self.sliceMenu.keep.get()
-        try:
-            if keep:
-                sliceWindow = tk.Toplevel()
-                sliceWindow.withdraw()
-                
-                sliceFrame = Window(sliceWindow)
-                sliceFrame.pack(fill=tk.BOTH, expand=True)
-            else:
-                self.mainCanvas.f.clear()
-                plt.figure(1)
+        #try:
+        if keep:
+            sliceWindow = tk.Toplevel()
+            sliceWindow.withdraw()
             
-            index = Data.dataopts[self.optionMenu.choice.get()]
-            minx = self.plotTools.minrangex.get()
-            maxx = self.plotTools.maxrangex.get()
-            miny = self.plotTools.minrangey.get()
-            maxy = self.plotTools.maxrangey.get()
-            minz = self.plotTools.minrangez.get()
-            maxz = self.plotTools.maxrangez.get()
-            slicex = self.sliceMenu.xslice.get()
-            slicey = self.sliceMenu.yslice.get()
-            slicet = self.sliceMenu.tslice.get()
-            textx = str(slicex)
-            texty = str(slicey)
-            textt = str(slicet)
-            
-            image = Data.files[index]
-            
-            if (minz and maxz):
-                minz = int(minz)
-                maxz = int(maxz)
-            else:
-                minz = None
-                maxz = None
-            
-            if image.dim == 3:
-                sizet = np.arange(image.shape[0])
-                sizey = np.arange(image.shape[1])
-                sizex = np.arange(image.shape[2])
-                if slicex:
-                    slicex = int(slicex)
-                    if slicey:
-                        slicey = int(slicey)
-                        labelvs = image.tname
-                        labelvsunit = image.tunit
-                        slicetext = image.xshort+textx+' and '+image.yshort+texty
-                        data = image.imgdata[:,slicey,slicex]
-                        plt.plot(sizet,data,lw=0.5,color='black')
-                    elif slicet:
-                        slicet = int(slicet)
-                        labelvs = image.yname
-                        labelvsunit = image.yunit
-                        slicetext = image.tshort+textt+' and '+image.xshort+textx
-                        data = image.imgdata[slicet,:,slicex]
-                        plt.plot(sizey,data,lw=0.5,color='black')
-                    else:
-                        slicetext = image.xshort+textx
-                        labelx = image.tname + ' ' + image.tunit
-                        labely = image.yname + ' ' + image.yunit
-                        data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
-                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                elif slicey:
+            sliceFrame = Window(sliceWindow)
+            sliceFrame.pack(fill=tk.BOTH, expand=True)
+        else:
+            self.mainCanvas.f.clear()
+            plt.figure(1)
+        
+        index = Data.dataopts[self.optionMenu.choice.get()]
+        minx = self.plotTools.minrangex.get()
+        maxx = self.plotTools.maxrangex.get()
+        miny = self.plotTools.minrangey.get()
+        maxy = self.plotTools.maxrangey.get()
+        minz = self.plotTools.minrangez.get()
+        maxz = self.plotTools.maxrangez.get()
+        slicex = self.sliceMenu.xslice.get()
+        slicey = self.sliceMenu.yslice.get()
+        slicet = self.sliceMenu.tslice.get()
+        textx = str(slicex)
+        texty = str(slicey)
+        textt = str(slicet)
+        
+        image = Data.files[index]
+        
+        if (minz and maxz):
+            minz = int(minz)
+            maxz = int(maxz)
+        else:
+            minz = None
+            maxz = None
+        
+        if image.dim == 3:
+            sizet = np.arange(image.shape[0])
+            sizey = np.arange(image.shape[1])
+            sizex = np.arange(image.shape[2])
+            if slicex:
+                slicex = int(slicex)
+                if slicey:
                     slicey = int(slicey)
-                    if slicet:
-                        slicet = int(slicet)
-                        labelvs = image.xname
-                        labelvsunit = image.xunit
-                        slicetext = image.tshort+textt+' and '+image.yshort+texty
-                        data = image.imgdata[slicet,slicey,:]
-                        plt.plot(sizex,data,lw=0.5,color='black')
-                    else:
-                        slicetext = image.yshort+texty
-                        labelx = image.xname + ' ' + image.xunit
-                        labely = image.tname + ' ' + image.tunit
-                        data = image.imgdata[:,slicey,:]
-                        plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz,origin = 'lower')
+                    labelvs = image.tname
+                    labelvsunit = image.tunit
+                    slicetext = image.xshort+textx+' and '+image.yshort+texty
+                    data = image.imgdata[:,slicey,slicex]
+                    plt.plot(sizet,data,lw=0.5,color='black')
                 elif slicet:
                     slicet = int(slicet)
-                    slicetext = image.tshort+textt
-                    labelx = image.xname + ' ' + image.xunit
-                    labely = image.yname + ' ' + image.yunit
-                    data = image.imgdata[slicet,...]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                    labelvs = image.yname
+                    labelvsunit = image.yunit
+                    slicetext = image.tshort+textt+' and '+image.xshort+textx
+                    data = image.imgdata[slicet,:,slicex]
+                    plt.plot(sizey,data,lw=0.5,color='black')
                 else:
-                    data = image.imgdata[0]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
-                    slicetext = image.tshort+'0'
-                    labelx = image.xname + ' ' + image.xunit
-                    labely = image.yname + ' ' + image.yunit
-                
-                if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
-                    plt.title(image.colorlabel+' vs '+labelvs+' at '+slicetext)
-                    plt.ylabel(image.colorlabel+' '+image.colorunits)
-                    plt.xlabel(labelvs+labelvsunit)
-                else:
-                    plt.title('Slice of '+image.title+' at '+slicetext)
-                    plt.xlabel(labelx)
-                    plt.ylabel(labely)
-                    ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
-                    plt.gca().invert_yaxis()
-            
-            elif image.dim == 2:
-                sizey = np.arange(image.shape[0])
-                sizex = np.arange(image.shape[1])
-                if slicex:
-                    slicex=int(slicex)
-                    plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
-                    labelindx = image.yname + ' ' + image.yunit
                     slicetext = image.xshort+textx
-                elif slicey:
-                    slicey=int(slicey)
-                    plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
-                    labelindx = image.xname + ' ' + image.xunit
+                    labelx = image.tname + ' ' + image.tunit
+                    labely = image.yname + ' ' + image.yunit
+                    data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+            elif slicey:
+                slicey = int(slicey)
+                if slicet:
+                    slicet = int(slicet)
+                    labelvs = image.xname
+                    labelvsunit = image.xunit
+                    slicetext = image.tshort+textt+' and '+image.yshort+texty
+                    data = image.imgdata[slicet,slicey,:]
+                    plt.plot(sizex,data,lw=0.5,color='black')
+                else:
                     slicetext = image.yshort+texty
-                elif slicet:
-                    messagebox.showerror('Error','Invalid axis.')
-                else:
-                    plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
-                    labelindx = image.xname + ' ' + image.xunit
-                    labelindy = image.yname + ' ' + image.yunit
-                if (slicex or slicey):
-                    plt.title(image.colorlabel+' at '+slicetext)
-                    plt.ylabel(image.colorlabel + image.colorunits)
-                    plt.xlabel(labelindx)
-                else:
-                    plt.title(image.title)
-                    plt.xlabel(labelindx)
-                    plt.ylabel(labelindy)
-                    ibar = plt.colorbar()
-                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
-                    plt.gca().invert_yaxis()
+                    labelx = image.xname + ' ' + image.xunit
+                    labely = image.tname + ' ' + image.tunit
+                    data = image.imgdata[:,slicey,:]
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz,origin = 'lower')
+            elif slicet:
+                slicet = int(slicet)
+                slicetext = image.tshort+textt
+                labelx = image.xname + ' ' + image.xunit
+                labely = image.yname + ' ' + image.yunit
+                data = image.imgdata[slicet,...]
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+            else:
+                data = image.imgdata[0]
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                slicetext = image.tshort+'0'
+                labelx = image.xname + ' ' + image.xunit
+                labely = image.yname + ' ' + image.yunit
             
+            if (slicex and slicey) or (slicex and slicet) or (slicey and slicet):
+                plt.title(image.colorlabel+' vs '+labelvs+' at '+slicetext)
+                plt.ylabel(image.colorlabel+' '+image.colorunits)
+                plt.xlabel(labelvs+labelvsunit)
+            else:
+                plt.title('Slice of '+image.title+' at '+slicetext)
+                plt.xlabel(labelx)
+                plt.ylabel(labely)
+                ibar = plt.colorbar()
+                try:
+                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+                except:
+                    ibar.set_label(image.colorlabel)
+                plt.gca().invert_yaxis()
+        
+        elif image.dim == 2:
+            sizey = np.arange(image.shape[0])
+            sizex = np.arange(image.shape[1])
+            if slicex:
+                slicex=int(slicex)
+                plt.plot(sizey,image.imgdata[:,slicex],lw=0.5,color='black')
+                labelindx = image.yname + ' ' + image.yunit
+                slicetext = image.xshort+textx
+            elif slicey:
+                slicey=int(slicey)
+                plt.plot(sizex,image.imgdata[slicey,:],lw=0.5,color='black')
+                labelindx = image.xname + ' ' + image.xunit
+                slicetext = image.yshort+texty
+            elif slicet:
+                messagebox.showerror('Error','Invalid axis.')
+            else:
+                plt.imshow(image.imgdata, cmap = image.color, vmin=minz, vmax=maxz)
+                labelindx = image.xname + ' ' + image.xunit
+                labelindy = image.yname + ' ' + image.yunit
+            if (slicex or slicey):
+                plt.title(image.colorlabel+' at '+slicetext)
+                plt.ylabel(image.colorlabel + image.colorunits)
+                plt.xlabel(labelindx)
             else:
                 plt.title(image.title)
-                plt.xlabel(image.xname+''+image.xunit)
-                plt.ylabel(image.yname+''+image.yunit)
-                #plt.xticks(image.xticksmin, image.xticksmax)
-                #plt.yticks(image.yticksmin, image.yticksmax)
-                plt.contourf(image.data1, image.data2, image.data3, 100)
+                plt.xlabel(labelindx)
+                plt.ylabel(labelindy)
                 ibar = plt.colorbar()
+                try:
+                    ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+                except:
+                    ibar.set_label(image.colorlabel)
+                plt.gca().invert_yaxis()
+        
+        else:
+            plt.title(image.title)
+            plt.xlabel(image.xname+''+image.xunit)
+            plt.ylabel(image.yname+''+image.yunit)
+            #plt.xticks(image.xticksmin, image.xticksmax)
+            #plt.yticks(image.yticksmin, image.yticksmax)
+            plt.contourf(image.data1, image.data2, image.data3, 100)
+            ibar = plt.colorbar()
+            try:
                 ibar.set_label(image.zname + ' ' + image.zunit)
+            except:
+                ibar.set_label(image.zname)
+    
+        if (minx and maxx):
+            minx = int(minx)
+            maxx = int(maxx)
+            plt.xlim(minx,maxx)
+        if (miny and maxy):
+            miny = int(miny)
+            maxy = int(maxy)
+            plt.ylim(maxy,miny)
+        if image.dim == 1:
+            text = 'Showing: ' + image.title
+        else:
+            text = "Showing: "+image.title+'. Size: '+image.dimensions
         
-            if (minx and maxx):
-                minx = int(minx)
-                maxx = int(maxx)
-                plt.xlim(minx,maxx)
-            if (miny and maxy):
-                miny = int(miny)
-                maxy = int(maxy)
-                plt.ylim(maxy,miny)
-            if image.dim == 1:
-                text = 'Showing: ' + image.title
-            else:
-                text = "Showing: "+image.title+'. Size: '+image.dimensions
-            
-            if keep:
-                sliceFrame.statusBar.statusbar.config(text = text)
-                sliceWindow.deiconify()
-            else:
-                self.mainCanvas.f.canvas.draw()
-            
-            self.plotTools.clearEntries()
-            self.sliceMenu.clearEntries()
-            self.fileInfo.update(image)
+        if keep:
+            sliceFrame.statusBar.statusbar.config(text = text)
+            sliceWindow.deiconify()
+        else:
+            self.mainCanvas.f.canvas.draw()
         
-        except:
+        self.plotTools.clearEntries()
+        self.sliceMenu.clearEntries()
+        self.fileInfo.update(image)
+        
+        '''except:
             messagebox.showerror('Error','Select a dataset.')
             if keep:
-                sliceWindow.destroy()
+                sliceWindow.destroy()'''
     
     def animation(self):
         #keep = self.sliceMenu.keep.get()
@@ -764,7 +773,10 @@ class Helioseismology(tk.Tk):
             plt.xlabel(labelindx)
             plt.ylabel(labelindy)
             ibar = plt.colorbar()
-            ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+            try:
+                ibar.set_label(image.colorlabel + ' ' + image.colorunits)
+            except:
+                ibar.set_label(image.colorlabel)
             
             def ani(i):
                 frame = i + 1
