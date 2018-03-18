@@ -699,7 +699,7 @@ class Helioseismology(tk.Tk):
         if (miny and maxy):
             miny = int(miny)
             maxy = int(maxy)
-            plt.ylim(maxy,miny)
+            plt.ylim(miny,maxy)
         if image.dim == 1:
             text = 'Showing: ' + image.title
         else:
