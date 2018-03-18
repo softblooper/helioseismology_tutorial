@@ -50,6 +50,7 @@ class FitsImage(object): # Allows creating of plots with data from fits files. A
         
         self.shape = np.shape(self.imgdata) #Shape of data set in (z,y,x) or (y,x)
         self.dim = len(self.shape) # Number of dimensions (2 or 3)
+        self.extents(None, None, None)
         
     def labels3d(self, xname, xunit, yname, yunit, tname, tunit, xshort, yshort, tshort):
         self.xname = xname
@@ -71,6 +72,16 @@ class FitsImage(object): # Allows creating of plots with data from fits files. A
         
         self.xshort = xshort
         self.yshort = yshort
+    
+    def extents(self, xny, xnt, tny):#, xind, yind, tind):
+        self.xny = xny
+        self.xnt = xnt
+        self.tny = tny
+        '''
+        self.xind = xind
+        self.yind = yind
+        self.tind = tind
+        '''
 
 class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requires 3 data sets in order to plot (contour plot)
     
@@ -84,7 +95,7 @@ class PowerSpectraAvg(object): # Seperate object for the averaged PS, which requ
         self.xticksmax = np.round(np.arange(0, 64, 8)*ratio_x)
         self.yticksmin = np.arange(0, 256, 25)
         self.yticksmax = np.round(np.arange(0, 256, 25)*ratio_y)
-        self.dimensions = '(128x128)'
+        self.dimensions = '(64x256)'
     
     def labels(self, xname, xunit, yname, yunit, zname, zunit, xshort, yshort, zshort):
         self.xname = xname
@@ -589,7 +600,7 @@ class Helioseismology(tk.Tk):
                     labelx = image.tname + ' ' + image.tunit
                     labely = image.yname + ' ' + image.yunit
                     data = ndimage.rotate(image.imgdata[:,:,slicex], 270)
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz, extent = image.tny)
             elif slicey:
                 slicey = int(slicey)
                 if slicet:
@@ -604,17 +615,17 @@ class Helioseismology(tk.Tk):
                     labelx = image.xname + ' ' + image.xunit
                     labely = image.tname + ' ' + image.tunit
                     data = image.imgdata[:,slicey,:]
-                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz,origin = 'lower')
+                    plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz, extent = image.xnt, origin = 'lower')
             elif slicet:
                 slicet = int(slicet)
                 slicetext = image.tshort+textt
                 labelx = image.xname + ' ' + image.xunit
                 labely = image.yname + ' ' + image.yunit
                 data = image.imgdata[slicet,...]
-                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz, extent = image.xny)
             else:
                 data = image.imgdata[0]
-                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz, extent = image.xny)
                 slicetext = image.tshort+'0'
                 labelx = image.xname + ' ' + image.xunit
                 labely = image.yname + ' ' + image.yunit
@@ -670,11 +681,11 @@ class Helioseismology(tk.Tk):
         
         else:
             plt.title(image.title)
-            plt.xlabel(image.xname+''+image.xunit)
-            plt.ylabel(image.yname+''+image.yunit)
+            plt.xlabel(image.xname+' '+image.xunit)
+            plt.ylabel(image.yname+' '+image.yunit)
             #plt.xticks(image.xticksmin, image.xticksmax)
             #plt.yticks(image.yticksmin, image.yticksmax)
-            plt.contourf(image.data1, image.data2, image.data3, 100)
+            plt.contourf(image.data1, image.data2, image.data3, 100, vmin = minz, vmax = maxz)
             ibar = plt.colorbar()
             try:
                 ibar.set_label(image.zname + ' ' + image.zunit)
@@ -745,19 +756,19 @@ class Helioseismology(tk.Tk):
                 anitext = image.tshort[0]
                 labelindx = image.xname + ' ' + image.xunit
                 labelindy = image.yname + ' ' + image.yunit
-                im = plt.imshow(image.imgdata[0], cmap = image.color, vmin=minz, vmax=maxz)
+                im = plt.imshow(image.imgdata[0], cmap = image.color, vmin=minz, vmax=maxz, extent = image.xny)
                 plt.gca().invert_yaxis()
             elif aniaxis == 2:
                 anitext = image.xshort[0]
                 labelindx = image.tname + ' ' + image.tunit
                 labelindy = image.yname + ' ' + image.yunit
                 data = ndimage.rotate(image.imgdata[:,0,:], 270)
-                im = plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz)
+                im = plt.imshow(data, cmap = image.color, vmin=minz, vmax=maxz, extent = image.tny)
             elif aniaxis == 1:
                 anitext = image.yshort[0]
                 labelindx = image.xname + ' ' + image.xunit
                 labelindy = image.tname + ' ' + image.tunit
-                im = plt.imshow(image.imgdata[...,0], cmap = image.color, vmin=minz, vmax=maxz, origin = 'lower')
+                im = plt.imshow(image.imgdata[...,0], cmap = image.color, vmin=minz, vmax=maxz, extent = image.xnt, origin = 'lower')
                 plt.gca().invert_yaxis()
             
             if (minx and maxx):
@@ -936,10 +947,10 @@ class Helioseismology(tk.Tk):
             
             title = Data.files[index].title + ' Power Spectra'
             
-            #PS ends here.
-            
             Data.add(FitsImage(power,title,None,'Power',None,title+'power','(128x128x512)'))
-            Data.files[-1].labels3d('X', '(pix)', 'Y', '(pix)', 'Frequency', '(Hz) ', 'x = ', 'y = ', r'$\nu$ = ')
+            Data.files[-1].labels3d('X Wavenumber', '(1/Mm)', 'Y Wavenumber', '(1/Mm)', 'Frequency', '(mHz) ', r'$k_x$ = ', r'$k_y$ = ', r'$\nu$ = ')
+            Data.files[-1].extents((-2.4, 2.4, -2.4, 2.4),(-2.4, 2.4, -8.33, 8.33),(-8.33, 8.33, -2.4, 2.4))
+            #PS ends here.
             
             begin_space = 0
             end_time = power.shape[0]
@@ -983,7 +994,7 @@ class Helioseismology(tk.Tk):
             M, N = np.meshgrid(m, n)
             A = a
             
-            title = title + ' Avg.'
+            title = Data.files[index].title  + ' PS Avg.'
             
             Data.add(PowerSpectraAvg(M,N,A,title,ratio_x,ratio_y)) #Power Spectrum Average
             Data.files[-1].labels('Wavenumber', '(1/Mm)', 'Frequency', '(mHz)', 'Power', None, 'k = ', r'$\nu$ = ', 't = ')
